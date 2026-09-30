@@ -238,6 +238,16 @@ impl ClientShellState {
         if switching_endpoint {
             // The aggregate agent list belongs to the client, not one endpoint.
             self.agent_scroll = agent_scroll;
+            if self.config.sidebar_layout == crate::config::SidebarLayoutConfig::Tree {
+                if let Some(pane_id) = self
+                    .snapshot
+                    .as_deref()
+                    .and_then(|snapshot| snapshot.focused_pane_id.clone())
+                {
+                    self.reveal_task_pane(endpoint_id, &pane_id);
+                    self.reveal_focused_workspace = true;
+                }
+            }
         }
         if let Some((_, pane_id)) = pending_agent_reveal {
             self.reveal_endpoint_agent(endpoint_id, &pane_id, agent_body_height);

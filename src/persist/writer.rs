@@ -295,6 +295,37 @@ mod tests {
         .unwrap()
     }
 
+    #[test]
+    fn project_catalog_survives_session_clear_and_round_trips() {
+        let mut writer = writer(false);
+        let path = writer.path.with_file_name("projects.json");
+        let projects = vec![crate::api::schema::ProjectInfo {
+            cwd: "D:/work/项目".into(),
+            label: "项目".into(),
+        }];
+        super::super::io::save_json_to_path(&path, &projects).unwrap();
+        writer.save(&snapshot(), None);
+        writer.clear();
+        let restored: Vec<crate::api::schema::ProjectInfo> =
+            serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        assert_eq!(restored[0].cwd, projects[0].cwd);
+        assert_eq!(restored[0].label, projects[0].label);
+    }
+
+    #[test]
+    fn project_catalog_failed_replace_reports_error_and_keeps_target() {
+        let writer = writer(false);
+        let path = writer.path.with_file_name("projects.json");
+        std::fs::create_dir(&path).unwrap();
+        assert!(super::super::io::save_json_to_path(
+            &path,
+            &Vec::<crate::api::schema::ProjectInfo>::new()
+        )
+        .is_err());
+        assert!(path.is_dir());
+        assert!(!path.with_extension("json.tmp").exists());
+    }
+
     fn backups(writer: &SessionWriter) -> Vec<Vec<u8>> {
         let directory = writer.path.with_file_name("session-backups");
         if !directory.exists() {

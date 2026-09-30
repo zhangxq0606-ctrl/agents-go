@@ -114,6 +114,8 @@ fn machine_diagnostic_badge_reopens_notice_without_collapsing_machine() {
 
 fn state_with_scrollable_agents() -> (ClientShellState, ClientEndpointId) {
     let (mut state, remote) = state_with_remote();
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     for endpoint_id in [ClientEndpointId::Local, remote.clone()] {
         let mut projection = state
             .endpoints
@@ -545,7 +547,7 @@ fn machine_navigation_does_not_require_a_local_snapshot_or_surface() {
 
 #[test]
 fn sidebar_renders_local_and_saved_ssh_endpoints_with_status() {
-    let (mut state, _) = state_with_remote();
+    let (mut state, endpoint_id) = state_with_remote();
     let frame = state.compose(100, 28).expect("combined endpoint frame");
     let text = frame
         .cells
@@ -559,7 +561,12 @@ fn sidebar_renders_local_and_saved_ssh_endpoints_with_status() {
         .join("\n");
     assert!(text.contains("Local"));
     assert!(text.contains("Build"));
-    assert!(text.contains("remote-workspace"));
+    assert!(text.contains("remote-"));
+    assert!(state
+        .hits
+        .workspaces
+        .iter()
+        .any(|hit| hit.endpoint_id == endpoint_id && hit.workspace_id == "ws_1"));
     let local = state
         .hits
         .machines
@@ -628,6 +635,8 @@ fn saved_machine_preserves_endpoint_scoped_worktree_collapses() {
     }
 
     let (mut state, remote_id) = state_with_remote();
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     let mut local = snapshot();
     add_worktree_group(&mut local, "ws_1", "ws_2");
     state.set_snapshot(Box::new(local));
@@ -785,6 +794,8 @@ fn saved_machine_preserves_endpoint_scoped_worktree_collapses() {
 #[test]
 fn expanded_machine_sidebar_reveals_newly_focused_workspace() {
     let (mut state, remote_id) = state_with_remote();
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     let mut initial = snapshot();
     let template = initial.workspaces[0].clone();
     initial.workspaces = (1..=12)
@@ -854,6 +865,8 @@ fn expanded_machine_sidebar_reveals_newly_focused_workspace() {
 #[test]
 fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
     let (mut state, remote_id) = state_with_remote();
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     state.config.spaces.row_gap = 1;
 
     let add_second_workspace = |snapshot: &mut ClientShellSnapshot| {
@@ -963,6 +976,7 @@ fn expanded_machine_sidebar_applies_space_row_gap_within_each_machine() {
 #[test]
 fn active_workspace_is_the_only_highlight_when_machine_is_expanded() {
     let (mut state, endpoint_id) = state_with_remote();
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     assert!(state.activate_endpoint_projection(&endpoint_id));
     let mut remote_surface = surface();
     remote_surface.boot_id = "remote-boot".into();
@@ -1022,6 +1036,8 @@ fn aggregate_agents_use_configured_rows_machine_token_and_status_colors() {
         AgentSidebarToken::Agent,
     ]];
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&config));
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     let profile = remote_profile();
     let endpoint_id = ClientEndpointId::Ssh(profile.id.clone());
     state.set_endpoint_catalog(&[profile]);
@@ -1082,6 +1098,8 @@ fn current_workspace_agent_view_excludes_same_workspace_id_on_other_machine() {
     config.ui.sidebar.agents.rows =
         vec![vec![AgentSidebarToken::Machine, AgentSidebarToken::Agent]];
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&config));
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     let profile = remote_profile();
     let endpoint_id = ClientEndpointId::Ssh(profile.id.clone());
     state.set_endpoint_catalog(&[profile]);
@@ -1148,6 +1166,8 @@ fn current_workspace_or_blocked_keeps_foreign_attention_only() {
     config.ui.sidebar.agents.rows =
         vec![vec![AgentSidebarToken::Machine, AgentSidebarToken::Agent]];
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&config));
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     let profile = remote_profile();
     let endpoint_id = ClientEndpointId::Ssh(profile.id.clone());
     state.set_endpoint_catalog(&[profile]);
@@ -1218,6 +1238,8 @@ fn selected_default_view_ignores_inactive_endpoint_projection() {
     config.ui.sidebar.agents.rows =
         vec![vec![AgentSidebarToken::Machine, AgentSidebarToken::Agent]];
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&config));
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     let profile = remote_profile();
     let endpoint_id = ClientEndpointId::Ssh(profile.id.clone());
     state.set_endpoint_catalog(&[profile]);
@@ -1315,6 +1337,8 @@ fn legacy_custom_views_keep_v1_per_endpoint_projection() {
     config.ui.sidebar.agents.rows =
         vec![vec![AgentSidebarToken::Machine, AgentSidebarToken::Agent]];
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&config));
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     let profile = remote_profile();
     let endpoint_id = ClientEndpointId::Ssh(profile.id.clone());
     state.set_endpoint_catalog(&[profile]);
@@ -1361,6 +1385,8 @@ fn selected_custom_sort_orders_rendering_and_indexed_navigation() {
     config.ui.sidebar.agents.rows =
         vec![vec![AgentSidebarToken::Machine, AgentSidebarToken::Agent]];
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&config));
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     let profile = remote_profile();
     let endpoint_id = ClientEndpointId::Ssh(profile.id.clone());
     state.set_endpoint_catalog(&[profile]);
@@ -1492,6 +1518,8 @@ fn aggregate_priority_uses_client_observed_recency_across_machines() {
     config.ui.sidebar.agents.rows =
         vec![vec![AgentSidebarToken::Machine, AgentSidebarToken::Agent]];
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&config));
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     let profile = remote_profile();
     let endpoint_id = ClientEndpointId::Ssh(profile.id.clone());
     state.set_endpoint_catalog(&[profile]);
@@ -1698,7 +1726,7 @@ fn machine_arrow_toggles_inactive_machine_without_switching() {
             state.sidebar_collapsed = sidebar_collapsed;
 
             for collapsed in [true, false] {
-                let frame = state.compose(100, 28).expect("three machine frame");
+                let frame = state.compose(100, 48).expect("three machine frame");
                 let machine = state
                     .hits
                     .machines
@@ -1740,7 +1768,7 @@ fn machine_arrow_toggles_inactive_machine_without_switching() {
                 assert!(!state.collapsed_endpoints.contains(&other_id));
                 assert!(state.endpoint_error.is_none());
 
-                state.compose(100, 28).expect("toggled machine frame");
+                state.compose(100, 48).expect("toggled machine frame");
                 assert_eq!(
                     state
                         .hits
@@ -1991,7 +2019,14 @@ fn disconnected_active_endpoint_freezes_surface_and_marks_cached_ui_stale() {
         Some(ClientEndpointStatus::Reconnecting)
     );
     assert!(text.contains("◐ reconnecting"), "frame: {text}");
-    assert!(text.contains("Build · remote agent"), "frame: {text}");
+    assert!(
+        state
+            .hits
+            .endpoint_agents
+            .iter()
+            .any(|(_, endpoint, pane)| endpoint == &endpoint_id && pane == "pane_1"),
+        "cached remote pane must remain visible: {text}"
+    );
     assert!(
         text.contains("LIVE"),
         "frozen surface should remain: {text}"
@@ -2002,7 +2037,7 @@ fn disconnected_active_endpoint_freezes_surface_and_marks_cached_ui_stale() {
     let stale_icon = buffer
         .content()
         .iter()
-        .find(|cell| cell.symbol() == "×")
+        .find(|cell| cell.symbol() == "!")
         .expect("stale blocked icon");
     assert_eq!(stale_icon.fg, state.config.palette.overlay0);
 }

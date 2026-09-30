@@ -165,14 +165,14 @@ fn desktop_composition_keeps_shell_outside_origin_relative_surface() {
         })
         .collect::<Vec<_>>()
         .join("\n");
-    assert!(text.contains("spaces"));
+    assert!(text.replace(' ', "").contains("当前任务"));
     assert!(text.contains("client-shell"));
     assert!(text.contains("main"));
     assert!(text.contains("LIVE"));
     assert!(!text.contains("1 1"));
     assert_eq!(
         frame.cursor.as_ref().map(|cursor| (cursor.x, cursor.y)),
-        Some((27, 2))
+        Some((state.sidebar_width + 1, 2))
     );
 }
 
@@ -955,6 +955,8 @@ fn sidebar_scrollbars_use_proportional_shared_geometry_and_drag() {
         });
     }
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     state.set_snapshot(Box::new(projected));
     state.set_pane_surface(surface());
     state.compose(106, 20).expect("overflowing sidebars");

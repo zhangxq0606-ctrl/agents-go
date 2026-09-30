@@ -28,6 +28,9 @@ fn grouped_workspaces() -> ClientShellSnapshot {
 
 fn navigation_state(mut projected: ClientShellSnapshot) -> (ClientShellState, ClientEndpointId) {
     let (mut state, remote) = state_with_remote();
+    // These tests protect the original split layout's workspace highlighting.
+    // Tree navigation and focused-pane styling are covered in task_tree tests.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     state.set_snapshot(Box::new(projected.clone()));
     projected.boot_id = "remote-boot".into();
     state.set_endpoint_snapshot(&remote, Box::new(projected));
@@ -78,6 +81,7 @@ fn local_navigation_highlight_stays_visible_with_terminal_theme() {
     for compact in [false, true] {
         for selection_bg in [Color::Reset, Color::Rgb(70, 63, 93)] {
             let mut config = ClientShellConfig::from_config(&Config::default());
+            config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
             config.palette = Palette::terminal();
             config.palette.selection_bg = selection_bg;
             let expected_bg = if selection_bg == Color::Reset {
@@ -587,6 +591,7 @@ fn aggregate_navigation_reveals_overflow_and_preserves_order() {
 
 fn local_navigation_state(compact: bool) -> ClientShellState {
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     state.config.palette = Palette::terminal();
     state.sidebar_collapsed = compact;
     state.set_snapshot(Box::new(workspaces(3)));

@@ -230,12 +230,17 @@ pub(super) fn render_mode_bar(
 }
 
 pub(super) struct ShellRenderState<'a> {
+    pub(super) task_animation_phase: u8,
+    pub(super) recent_projects: &'a [crate::api::schema::ProjectInfo],
+    pub(super) recent_scroll: &'a mut usize,
+    pub(super) recent_collapsed: bool,
     pub(super) machine_diagnostics: &'a super::machine_diagnostics::MachineDiagnostics,
     pub(super) endpoints: &'a [ClientShellEndpoint],
     pub(super) active_endpoint_id: &'a ClientEndpointId,
     pub(super) collapsed_endpoints: &'a HashSet<ClientEndpointId>,
     pub(super) collapsed_groups: &'a HashSet<String>,
     pub(super) remote_collapsed_groups: &'a HashMap<ClientEndpointId, HashSet<String>>,
+    pub(super) collapsed_tasks: &'a HashSet<(ClientEndpointId, String)>,
     pub(super) workspace_scroll: &'a mut usize,
     pub(super) agent_scroll: &'a mut usize,
     pub(super) tab_scroll: &'a mut usize,
@@ -328,10 +333,15 @@ pub(super) fn render_shell(
         hits.agent_scrollbar = Rect::default();
         hits.agent_sort_toggle = Rect::default();
         hits.new_workspace = Rect::default();
+        hits.recent_projects.clear();
+        hits.recent_body = Rect::default();
+        hits.recent_toggle = Rect::default();
         hits.machines.clear();
         hits.workspaces.clear();
         hits.agents.clear();
         hits.endpoint_agents.clear();
+        hits.task_toggles.clear();
+        hits.task_add.clear();
         hits.tab_scroll_left = Rect::default();
         hits.tab_scroll_right = Rect::default();
         hits.new_tab = Rect::default();

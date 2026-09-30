@@ -19,6 +19,23 @@ impl App {
     }
 
     pub(crate) fn sync_session_save_schedule(&mut self) {
+        if self.state.projects_dirty
+            && self.policy.persist_session
+            && self
+                .project_save_retry_at
+                .is_none_or(|deadline| Instant::now() >= deadline)
+        {
+            match crate::persist::projects::save(&self.state.recent_projects) {
+                Ok(()) => {
+                    self.state.projects_dirty = false;
+                    self.project_save_retry_at = None;
+                }
+                Err(err) => {
+                    tracing::warn!(%err, "could not save project history; retrying later");
+                    self.project_save_retry_at = Some(Instant::now() + Duration::from_secs(1));
+                }
+            }
+        }
         if self.state.session_dirty {
             self.state.session_dirty = false;
             self.schedule_session_save();
@@ -121,6 +138,12 @@ impl App {
     }
 
     pub(crate) fn save_session_on_shutdown(&mut self) {
+        if self.state.projects_dirty && self.policy.persist_session {
+            match crate::persist::projects::save(&self.state.recent_projects) {
+                Ok(()) => self.state.projects_dirty = false,
+                Err(err) => tracing::warn!(%err, "could not save project history on shutdown"),
+            }
+        }
         if self.pane_exit_checkpoint_pending && !self.state.session_dirty {
             self.session_save_deadline = None;
             return;

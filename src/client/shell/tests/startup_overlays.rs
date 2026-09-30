@@ -681,11 +681,11 @@ fn update_ready_menu_opens_client_owned_release_notes_and_dismisses_by_version()
     let shell_buffer = shell.to_ratatui_buffer().expect("shell buffer");
     let badge_x = launcher.right().saturating_sub(6);
     assert_eq!(
-        shell_buffer[(badge_x, launcher.y)].fg,
+        shell_buffer[(badge_x, launcher.y + launcher.height / 2)].fg,
         state.config.palette.accent
     );
     assert_eq!(
-        shell_buffer[(badge_x + 2, launcher.y)].fg,
+        shell_buffer[(badge_x + 2, launcher.y + launcher.height / 2)].fg,
         state.config.palette.overlay0
     );
 

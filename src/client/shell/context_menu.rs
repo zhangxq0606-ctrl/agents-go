@@ -5,7 +5,22 @@ impl ClientContextMenuOverlay {
         use ClientContextMenuAction as Action;
 
         let item = |label, action| ClientContextMenuItem { label, action };
-        match &self.target {
+        let mut items = match &self.target {
+            ClientContextMenuTarget::RecentProject {
+                can_open,
+                can_forget,
+                ..
+            } => {
+                let mut items = Vec::new();
+                if *can_open {
+                    items.push(item("打开项目", Action::OpenProject));
+                }
+                items.push(item("完整路径", Action::ProjectPath));
+                if *can_forget {
+                    items.push(item("从最近项目移除", Action::ForgetProject));
+                }
+                items
+            }
             ClientContextMenuTarget::Workspace { is_git: false, .. } => {
                 vec![item("Rename", Action::Rename), item("Close", Action::Close)]
             }
@@ -56,7 +71,10 @@ impl ClientContextMenuOverlay {
                 right_click_passthrough,
                 ..
             } => {
-                let mut items = vec![item("Rename pane", Action::RenamePane)];
+                let mut items = vec![
+                    item("Rename pane", Action::RenamePane),
+                    item("状态说明", Action::StatusInfo),
+                ];
                 if *has_manual_label {
                     items.push(item("Clear pane name", Action::ClearPaneName));
                 }
@@ -79,11 +97,74 @@ impl ClientContextMenuOverlay {
                 ]);
                 items
             }
+        };
+        if matches!(self.target, ClientContextMenuTarget::Workspace { .. }) {
+            items.extend([
+                item("New terminal", Action::NewTab),
+                item("Run command in new terminal...", Action::RunTaskCommand),
+            ]);
+            items.sort_by_key(|item| match item.action {
+                Action::NewTab => 0,
+                Action::RunTaskCommand => 1,
+                Action::Rename => 2,
+                Action::NewWorktree | Action::OpenWorktree => 3,
+                Action::ToggleGroup => 4,
+                Action::Close => 5,
+                Action::RemoveWorktree => 6,
+                _ => 4,
+            });
         }
+        items
     }
 }
 
 impl ClientShellState {
+    pub(super) fn create_task_session(
+        &mut self,
+        workspace_id: String,
+        outcome: &mut ClientShellInput,
+    ) {
+        let Some(snapshot) = self.snapshot.as_deref() else {
+            return;
+        };
+        if !snapshot
+            .workspaces
+            .iter()
+            .any(|workspace| workspace.workspace_id == workspace_id)
+        {
+            return;
+        }
+        if self.config.prompt_new_tab_name {
+            let default_name = (snapshot
+                .tabs
+                .iter()
+                .filter(|tab| tab.workspace_id == workspace_id)
+                .count()
+                + 1)
+            .to_string();
+            self.overlay = Some(ClientShellOverlay::Rename(ClientRenameOverlay {
+                title: "new session",
+                input: TextEditor::new(&default_name, true),
+                target: ClientRenameTarget::NewTab {
+                    workspace_id,
+                    default_name,
+                },
+            }));
+        } else {
+            self.push_endpoint_method(
+                crate::api::schema::Method::TabCreate(crate::api::schema::TabCreateParams {
+                    workspace_id: Some(workspace_id),
+                    cwd: None,
+                    focus: true,
+                    label: None,
+                    env: Default::default(),
+                }),
+                outcome,
+            );
+        }
+        outcome.repaint = true;
+    }
+
     pub(super) fn open_workspace_context_menu(&mut self, workspace_id: String, x: u16, y: u16) {
         let Some(snapshot) = self.snapshot.as_deref() else {
             return;
@@ -192,6 +273,17 @@ impl ClientShellState {
             return;
         };
         match menu.target {
+            ClientContextMenuTarget::RecentProject { cwd, .. } => {
+                match action {
+                    ClientContextMenuAction::OpenProject => self.open_recent_project(cwd, outcome),
+                    ClientContextMenuAction::ForgetProject => {
+                        self.forget_recent_project(cwd, outcome)
+                    }
+                    ClientContextMenuAction::ProjectPath => self.show_recent_project_path(cwd),
+                    _ => {}
+                }
+                outcome.repaint = true;
+            }
             ClientContextMenuTarget::Workspace {
                 workspace_id,
                 close_group,
@@ -229,6 +321,15 @@ impl ClientShellState {
         use crate::input::KeybindAction;
 
         match action {
+            ClientContextMenuAction::NewTab => self.create_task_session(workspace_id, outcome),
+            ClientContextMenuAction::RunTaskCommand => {
+                self.overlay = Some(ClientShellOverlay::Rename(ClientRenameOverlay {
+                    title: "command for new terminal",
+                    input: TextEditor::new("", false),
+                    target: ClientRenameTarget::NewTaskCommand { workspace_id },
+                }));
+                outcome.repaint = true;
+            }
             ClientContextMenuAction::Rename => {
                 let label = self
                     .snapshot
@@ -370,6 +471,9 @@ impl ClientShellState {
         };
 
         match action {
+            ClientContextMenuAction::StatusInfo => {
+                self.open_task_status_info(&pane_id);
+            }
             ClientContextMenuAction::RenamePane => {
                 let label = self.snapshot.as_deref().and_then(|snapshot| {
                     snapshot

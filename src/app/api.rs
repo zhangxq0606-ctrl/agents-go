@@ -7,6 +7,7 @@ mod integrations;
 mod layouts;
 mod panes;
 pub(crate) mod plugins;
+mod projects;
 pub(super) mod responses;
 mod session;
 mod tabs;
@@ -1048,6 +1049,9 @@ impl App {
             Method::WorkspaceClose(target) => {
                 return self.handle_workspace_close(request.id, target);
             }
+            Method::ProjectList(_) => return self.handle_project_list(request.id),
+            Method::ProjectOpen(target) => return self.handle_project_open(request.id, target),
+            Method::ProjectForget(target) => return self.handle_project_forget(request.id, target),
             Method::WorktreeList(_) | Method::WorktreeOpen(_) => {
                 return responses::encode_error(
                     request.id,

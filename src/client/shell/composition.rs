@@ -55,18 +55,26 @@ impl ClientShellState {
                     == Some(ClientEndpointStatus::Online)
         });
         let mut render_state = render::ShellRenderState {
+            task_animation_phase: self.task_animation_phase,
+            recent_projects: self
+                .project_catalogs
+                .get(&self.active_endpoint_id)
+                .map_or(&[], Vec::as_slice),
+            recent_scroll: &mut self.recent_scroll,
+            recent_collapsed: self.recent_collapsed,
             machine_diagnostics: &self.machine_diagnostics,
             endpoints: &self.endpoints,
             active_endpoint_id: &self.active_endpoint_id,
             collapsed_endpoints: &self.collapsed_endpoints,
             collapsed_groups: &self.collapsed_groups,
             remote_collapsed_groups: &self.remote_collapsed_groups,
+            collapsed_tasks: &self.collapsed_tasks,
             workspace_scroll: &mut self.workspace_scroll,
             agent_scroll: &mut self.agent_scroll,
             tab_scroll: &mut self.tab_scroll,
             reveal_focused_workspace: &mut self.reveal_focused_workspace,
             reveal_focused_tab: &mut self.reveal_focused_tab,
-            sidebar_collapsed: false,
+            sidebar_collapsed: self.sidebar_collapsed,
             sidebar_section_split: self.sidebar_section_split,
             tab_drag_insert_index: None,
             selected_workspace_id: self
@@ -211,12 +219,20 @@ impl ClientShellState {
             snapshot,
             &self.config,
             render::ShellRenderState {
+                task_animation_phase: self.task_animation_phase,
+                recent_projects: self
+                    .project_catalogs
+                    .get(&self.active_endpoint_id)
+                    .map_or(&[], Vec::as_slice),
+                recent_scroll: &mut self.recent_scroll,
+                recent_collapsed: self.recent_collapsed,
                 machine_diagnostics: &self.machine_diagnostics,
                 endpoints: &self.endpoints,
                 active_endpoint_id: &self.active_endpoint_id,
                 collapsed_endpoints: &self.collapsed_endpoints,
                 collapsed_groups: &self.collapsed_groups,
                 remote_collapsed_groups: &self.remote_collapsed_groups,
+                collapsed_tasks: &self.collapsed_tasks,
                 workspace_scroll: &mut self.workspace_scroll,
                 agent_scroll: &mut self.agent_scroll,
                 tab_scroll: &mut self.tab_scroll,

@@ -7,6 +7,7 @@ pub mod events;
 pub mod integrations;
 pub mod panes;
 pub mod plugins;
+pub mod projects;
 pub mod response;
 pub mod server;
 pub mod session;
@@ -21,6 +22,7 @@ pub use events::*;
 pub use integrations::*;
 pub use panes::*;
 pub use plugins::*;
+pub use projects::*;
 pub use response::*;
 pub use server::*;
 pub use session::*;
@@ -45,6 +47,12 @@ pub struct Request {
 // the simple serde shape and avoids boxing churn across every caller.
 #[allow(clippy::large_enum_variant)]
 pub enum Method {
+    #[serde(rename = "project.list")]
+    ProjectList(EmptyParams),
+    #[serde(rename = "project.open")]
+    ProjectOpen(ProjectTarget),
+    #[serde(rename = "project.forget")]
+    ProjectForget(ProjectTarget),
     #[serde(rename = "ping")]
     Ping(PingParams),
     #[serde(rename = "server.stop")]

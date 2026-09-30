@@ -124,11 +124,13 @@ const DEFAULT_CONFIG: &str = r##"# herdr configuration
 # so existing preview installs stay there until explicitly switched.
 # channel = "stable"
 
-# Check herdr.dev for new Herdr versions in the background.
-# version_check = true
+# Check the Agents Go release manifest for new versions in the background.
+# Disabled until Agents Go publishes releases.
+# version_check = false
 
-# Check herdr.dev for remote agent-detection manifest updates in the background.
-# manifest_check = true
+# Check the Agents Go repository for remote agent-detection manifest updates.
+# Disabled until the public repository is available.
+# manifest_check = false
 
 [keys]
 # Prefix key to enter prefix mode (default: "ctrl+b")
@@ -244,6 +246,8 @@ const DEFAULT_CONFIG: &str = r##"# herdr configuration
 
 # Collapsed sidebar presentation: "compact" keeps the narrow status rail, "hidden" uses zero width.
 # sidebar_collapsed_mode = "compact"
+# Expanded sidebar: project tree, or separate workspace/agent panels.
+# sidebar_layout = "tree"
 
 # Terminal width at or below which Herdr uses the mobile single-column layout.
 # Increase this for foldables, tablets, or wide phone terminals.
@@ -707,7 +711,7 @@ fn main() -> io::Result<()> {
         println!("Config: {}", config::config_path().display());
         println!("Logs:   {}", logging::help_log_paths_summary());
         println!("Env:    HERDR_CONFIG_PATH overrides config file path");
-        println!("Home:   https://herdr.dev");
+        println!("Home:   https://github.com/zhangxq0606-ctrl/agents-go");
         println!();
         println!("{}", cli::AGENT_HELP_FOOTER);
         return Ok(());

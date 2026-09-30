@@ -487,6 +487,13 @@ impl ClientShellState {
             return;
         }
 
+        if matches!(self.overlay, Some(ClientShellOverlay::StatusInfo(_))) {
+            if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
+                self.overlay = None;
+                outcome.repaint = true;
+            }
+            return;
+        }
         if matches!(
             self.overlay,
             Some(ClientShellOverlay::ProductAnnouncement(_))
@@ -929,6 +936,27 @@ impl ClientShellState {
         };
         let trimmed = rename.input.trim();
         let method = match rename.target {
+            ClientRenameTarget::NewTaskCommand { workspace_id } => {
+                if !trimmed.is_empty() {
+                    self.push_endpoint_method_with_kind(
+                        crate::api::schema::Method::TabCreate(
+                            crate::api::schema::TabCreateParams {
+                                workspace_id: Some(workspace_id),
+                                cwd: None,
+                                focus: true,
+                                label: None,
+                                env: Default::default(),
+                            },
+                        ),
+                        PendingEndpointKind::TaskCommand {
+                            command: trimmed.to_owned(),
+                        },
+                        outcome,
+                    );
+                }
+                outcome.repaint = true;
+                return;
+            }
             ClientRenameTarget::NewWorkspace {
                 source_workspace_id,
                 cwd,

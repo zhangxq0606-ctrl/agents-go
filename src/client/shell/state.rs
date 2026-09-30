@@ -18,6 +18,7 @@ pub(crate) struct ClientShellConfig {
     pub(super) sidebar_max_width: u16,
     pub(super) sidebar_start_collapsed: bool,
     pub(super) sidebar_collapsed_mode: SidebarCollapsedModeConfig,
+    pub(super) sidebar_layout: crate::config::SidebarLayoutConfig,
     pub(super) mobile_width_threshold: u16,
     pub(super) tab_bar_position: TabBarPositionConfig,
     pub(super) hide_tab_bar_when_single_tab: bool,
@@ -95,6 +96,12 @@ pub(super) struct ShellHitMap {
     pub(super) pane_splits: Vec<PaneSplitHit>,
     pub(super) agents: Vec<(Rect, String)>,
     pub(super) endpoint_agents: Vec<(Rect, ClientEndpointId, String)>,
+    pub(super) task_toggles: Vec<(Rect, ClientEndpointId, String)>,
+    pub(super) task_working_visible: bool,
+    pub(super) recent_projects: Vec<(Rect, String)>,
+    pub(super) recent_body: Rect,
+    pub(super) recent_toggle: Rect,
+    pub(super) task_add: Vec<(Rect, ClientEndpointId, String)>,
     pub(super) agent_body: Rect,
     pub(super) agent_scrollbar: Rect,
     pub(super) agent_scroll_metrics: Option<crate::pane::ScrollMetrics>,
@@ -284,6 +291,7 @@ pub(super) enum ClientShellOverlayKind {
     Rename,
     ConfirmClose,
     Help,
+    StatusInfo,
     Navigator,
     WorktreeCreate,
     WorktreeOpen,
@@ -306,6 +314,9 @@ pub(super) enum ClientRenameTarget {
     NewTab {
         workspace_id: String,
         default_name: String,
+    },
+    NewTaskCommand {
+        workspace_id: String,
     },
     Tab {
         tab_id: String,
@@ -510,6 +521,9 @@ pub(super) struct ClientWorktreeRemoveOverlay {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum ClientContextMenuAction {
+    OpenProject,
+    ForgetProject,
+    ProjectPath,
     Rename,
     Close,
     NewWorktree,
@@ -517,6 +531,8 @@ pub(super) enum ClientContextMenuAction {
     RemoveWorktree,
     ToggleGroup,
     NewTab,
+    RunTaskCommand,
+    StatusInfo,
     RenamePane,
     ClearPaneName,
     SwapWithFocusedPane,
@@ -529,6 +545,11 @@ pub(super) enum ClientContextMenuAction {
 
 #[derive(Debug)]
 pub(super) enum ClientContextMenuTarget {
+    RecentProject {
+        cwd: String,
+        can_open: bool,
+        can_forget: bool,
+    },
     Workspace {
         workspace_id: String,
         is_git: bool,
@@ -586,6 +607,7 @@ pub(super) enum ClientShellOverlay {
     Rename(ClientRenameOverlay),
     ConfirmClose(ClientConfirmCloseOverlay),
     Help(ClientHelpOverlay),
+    StatusInfo(String),
     Navigator(ClientNavigatorOverlay),
     WorktreeCreate(ClientWorktreeCreateOverlay),
     WorktreeOpen(ClientWorktreeOpenOverlay),
@@ -604,6 +626,7 @@ impl ClientShellOverlay {
             Self::Rename(_) => ClientShellOverlayKind::Rename,
             Self::ConfirmClose(_) => ClientShellOverlayKind::ConfirmClose,
             Self::Help(_) => ClientShellOverlayKind::Help,
+            Self::StatusInfo(_) => ClientShellOverlayKind::StatusInfo,
             Self::Navigator(_) => ClientShellOverlayKind::Navigator,
             Self::WorktreeCreate(_) => ClientShellOverlayKind::WorktreeCreate,
             Self::WorktreeOpen(_) => ClientShellOverlayKind::WorktreeOpen,
@@ -617,7 +640,17 @@ impl ClientShellOverlay {
 
 #[derive(Debug)]
 pub(super) enum PendingEndpointKind {
+    ProjectOpen {
+        cwd: String,
+    },
+    ProjectCatalog {
+        epoch: u64,
+        reveal: bool,
+    },
     Generic,
+    TaskCommand {
+        command: String,
+    },
     ProductAnnouncementDismiss {
         version: String,
         id: String,
@@ -871,6 +904,16 @@ pub(crate) struct ClientShellState {
     pub(super) tab_press: Option<ClientTabPress>,
     pub(super) collapsed_groups: HashSet<String>,
     pub(super) remote_collapsed_groups: HashMap<ClientEndpointId, HashSet<String>>,
+    /// Client-only task expansion, independent of worktree grouping and terminal state.
+    pub(super) collapsed_tasks: HashSet<(ClientEndpointId, String)>,
+    pub(super) task_animation_phase: u8,
+    pub(super) project_catalogs: HashMap<ClientEndpointId, Vec<crate::api::schema::ProjectInfo>>,
+    pub(super) project_catalog_signature: Option<super::project_history::ProjectCatalogSignature>,
+    pub(super) project_catalog_refresh_at: Option<std::time::Instant>,
+    pub(super) project_catalog_epoch: u64,
+    pub(super) recent_scroll: usize,
+    pub(super) recent_collapsed: bool,
+    pub(super) task_animation_deadline: Option<std::time::Instant>,
     pub(super) workspace_scroll: usize,
     pub(super) agent_scroll: usize,
     pub(super) pending_agent_reveal: Option<(ClientEndpointId, String)>,
@@ -890,6 +933,7 @@ pub(crate) struct ClientShellState {
     pub(super) collapsed_endpoints: HashSet<ClientEndpointId>,
     pub(super) mode: ClientShellMode,
     pub(super) navigate_workspace_id: Option<WorkspaceNavigationTarget>,
+    pub(super) task_navigation_cursor: Option<(ClientEndpointId, ClientEndpointFocusTarget)>,
     pub(super) pending_workspace_highlight: Option<PendingWorkspaceHighlight>,
     pub(super) reveal_navigation_workspace: bool,
     pub(super) overlay: Option<ClientShellOverlay>,
@@ -1036,6 +1080,15 @@ impl ClientShellState {
             tab_press: None,
             collapsed_groups: preferences.collapsed_groups.into_iter().collect(),
             remote_collapsed_groups,
+            collapsed_tasks: HashSet::new(),
+            task_animation_phase: 0,
+            project_catalogs: HashMap::new(),
+            project_catalog_signature: None,
+            project_catalog_refresh_at: None,
+            project_catalog_epoch: 0,
+            recent_scroll: 0,
+            recent_collapsed: false,
+            task_animation_deadline: None,
             workspace_scroll: 0,
             agent_scroll: 0,
             pending_agent_reveal: None,
@@ -1055,6 +1108,7 @@ impl ClientShellState {
             collapsed_endpoints: HashSet::new(),
             mode: ClientShellMode::Terminal,
             navigate_workspace_id: None,
+            task_navigation_cursor: None,
             pending_workspace_highlight: None,
             reveal_navigation_workspace: false,
             overlay,
@@ -1214,6 +1268,10 @@ impl ClientShellState {
     }
 
     pub(super) fn reset_endpoint_projection(&mut self) {
+        self.project_catalog_signature = None;
+        self.project_catalog_refresh_at = None;
+        self.project_catalog_epoch = self.project_catalog_epoch.wrapping_add(1);
+        self.recent_scroll = 0;
         self.hits = ShellHitMap::default();
         self.pane_surface = None;
         self.pending_pane_surface = None;
@@ -1246,6 +1304,7 @@ impl ClientShellState {
         self.endpoint_error = None;
         self.endpoint_error_deadline = None;
         self.navigate_workspace_id = None;
+        self.task_navigation_cursor = None;
         self.pending_workspace_highlight = None;
         self.overlay = self
             .config
@@ -1385,6 +1444,11 @@ impl ClientShellState {
                 self.mode = ClientShellMode::Terminal;
             }
         }
+        let task_focus_changed = self.snapshot.as_deref().is_none_or(|current| {
+            current.focused_pane_id != snapshot.focused_pane_id
+                || current.focused_workspace_id != snapshot.focused_workspace_id
+        });
+        let task_focus = snapshot.focused_pane_id.clone();
         let tab_layout_changed = self.snapshot.as_deref().is_none_or(|current| {
             current.tabs.len() != snapshot.tabs.len()
                 || current
@@ -1563,6 +1627,15 @@ impl ClientShellState {
             }
         }
         self.snapshot = Some(snapshot);
+        if task_focus_changed
+            && self.config.sidebar_layout == crate::config::SidebarLayoutConfig::Tree
+        {
+            self.reveal_focused_workspace = true;
+            if let Some(pane_id) = task_focus {
+                let endpoint_id = self.active_endpoint_id.clone();
+                self.reveal_task_pane(&endpoint_id, &pane_id);
+            }
+        }
         self.reconcile_pending_workspace_highlight();
         let pending_surface = self.pending_pane_surface.take();
         if let Some(surface) = pending_surface {
@@ -1860,6 +1933,7 @@ impl ClientShellState {
         self.selection_autoscroll_deadline
             .into_iter()
             .chain(self.selection_repaint_deadline)
+            .chain(self.task_animation_deadline)
             .min()
             .map(|deadline| deadline.saturating_duration_since(now).min(default))
             .unwrap_or(default)

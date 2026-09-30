@@ -460,14 +460,14 @@
         {
           "key": "update.version_check",
           "type": "boolean",
-          "default": "true",
-          "description": "Check herdr.dev for new Herdr versions in the background."
+          "default": "false",
+          "description": "Check the Agents Go release manifest for new versions in the background. Disabled until Agents Go publishes releases."
         },
         {
           "key": "update.manifest_check",
           "type": "boolean",
-          "default": "true",
-          "description": "Check herdr.dev for remote agent-detection manifest updates in the background. Bundled manifests and local overrides still apply."
+          "default": "false",
+          "description": "Check the Agents Go repository for remote agent-detection manifest updates in the background. Disabled until the public repository is available. Bundled manifests and local overrides still apply."
         }
       ]
     },
@@ -862,7 +862,7 @@
         {
           "key": "ui.sidebar_width",
           "type": "integer",
-          "default": "26",
+          "default": "30",
           "description": "Default expanded sidebar width in columns. Auto-scales based on workspace names."
         },
         {
@@ -874,7 +874,7 @@
         {
           "key": "ui.sidebar_max_width",
           "type": "integer",
-          "default": "36",
+          "default": "44",
           "description": "Maximum sidebar width (columns) when expanded."
         },
         {
@@ -892,6 +892,13 @@
             "compact",
             "hidden"
           ]
+        },
+        {
+          "key": "ui.sidebar_layout",
+          "type": "enum",
+          "default": "tree",
+          "description": "Expanded sidebar layout. Tree groups all agent and shell panes under projects; split keeps the separate configurable workspace and agent panels. Agent row templates, view filters and priority sorting apply to the separate agent panel and compact rail.",
+          "values": ["tree", "split"]
         },
         {
           "key": "ui.mobile_width_threshold",

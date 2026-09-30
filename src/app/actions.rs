@@ -677,6 +677,7 @@ impl AppState {
         let mut terminal_ids = Vec::new();
         let mut pane_ids = Vec::new();
         for idx in &close_indices {
+            self.remember_closed_project(*idx);
             terminal_ids.extend(self.terminal_ids_for_workspace(*idx));
             pane_ids.extend(self.pane_ids_for_workspace(*idx));
             if let Some(workspace_id) = self.workspaces.get(*idx).map(|ws| ws.id.clone()) {
@@ -2070,6 +2071,7 @@ impl AppState {
                 .and_then(|idx| self.workspaces.get(idx))
                 .map(|ws| ws.id.clone());
             let selected_workspace_id = self.workspaces.get(self.selected).map(|ws| ws.id.clone());
+            self.remember_closed_project(ws_idx);
             self.workspaces.remove(ws_idx);
             self.remove_unattached_terminal_ids(workspace_terminal_ids);
             if self.workspaces.is_empty() {
@@ -2904,6 +2906,7 @@ mod tests {
 
         assert_eq!(state.workspaces.len(), 1);
         assert_eq!(state.workspaces[0].custom_name.as_deref(), Some("b"));
+        assert_eq!(state.recent_projects[0].label, "a");
         state.assert_invariants_for_test();
     }
 
@@ -2930,6 +2933,7 @@ mod tests {
 
         assert_eq!(state.workspaces.len(), 1);
         assert_eq!(state.workspaces[0].panes.len(), 1);
+        assert!(state.recent_projects.is_empty());
         state.assert_invariants_for_test();
     }
 

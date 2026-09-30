@@ -498,6 +498,13 @@ pub(crate) fn prepare_paste_text_for_pty_platform(text: String) -> String {
     text.replace("\r\n", "\n").replace('\n', "\r\n")
 }
 
+pub(crate) fn project_path_key_platform(path: &str) -> String {
+    path.trim_start_matches(r"\\?\")
+        .replace('\\', "/")
+        .trim_end_matches('/')
+        .to_lowercase()
+}
+
 pub(crate) fn normalize_cwd_for_launch_platform(path: &std::path::Path) -> PathBuf {
     use std::os::windows::ffi::{OsStrExt, OsStringExt};
     use std::path::{Component, Prefix};

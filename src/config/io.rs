@@ -21,9 +21,9 @@ const KNOWN_TOP_LEVEL_CONFIG_KEYS: &[&str] = &[
 
 pub fn app_dir_name() -> &'static str {
     if cfg!(debug_assertions) {
-        "herdr-dev"
+        "agents-go-dev"
     } else {
-        "herdr"
+        "agents-go"
     }
 }
 
@@ -750,6 +750,16 @@ fn upsert_section_raw(content: &str, section: &str, key: &str, value: &str) -> S
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn app_data_directory_is_isolated_from_herdr() {
+        let expected = if cfg!(debug_assertions) {
+            "agents-go-dev"
+        } else {
+            "agents-go"
+        };
+        assert_eq!(app_dir_name(), expected);
+    }
 
     #[test]
     fn upsert_top_level_bool_replaces_existing_value() {

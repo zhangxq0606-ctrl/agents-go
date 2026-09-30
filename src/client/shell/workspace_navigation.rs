@@ -165,6 +165,7 @@ impl ClientShellState {
 
     pub(super) fn accept_navigate_workspace(&mut self, outcome: &mut ClientShellInput) {
         let Some(target) = self.navigate_workspace_id.clone() else {
+            self.task_navigation_cursor = None;
             self.mode = self.copy_or_terminal_mode();
             outcome.repaint = true;
             return;
@@ -197,6 +198,7 @@ impl ClientShellState {
             }
             self.mode = ClientShellMode::Terminal;
             self.navigate_workspace_id = None;
+            self.task_navigation_cursor = None;
         }
         outcome.repaint = true;
     }

@@ -36,6 +36,9 @@ const CLIENT_SHELL_METHODS: &[&str] = &[
     "pane.swap",
     "pane.zoom",
     "product_announcement.dismiss",
+    "project.forget",
+    "project.list",
+    "project.open",
     "release_notes.dismiss",
     "server.reload_config",
     "tab.close",
@@ -296,6 +299,18 @@ mod tests {
         assert_eq!(
             actual.remove("pane.link.resolve").as_deref(),
             Some("f5e4a3e01453ae7b188f127ce951c12c20e0bebcc17cc364eeb6d1a01fd5bf81")
+        );
+        assert_eq!(
+            actual.remove("project.list").as_deref(),
+            Some("aef882d2d83f7d62471927ac10859085fc2f0f56e83c4858b059a25215053adc")
+        );
+        assert_eq!(
+            actual.remove("project.open").as_deref(),
+            Some("8258eef307a3b62e34f733d2d97c429e097c32bc19a7c4707917ae09ef323cfe")
+        );
+        assert_eq!(
+            actual.remove("project.forget").as_deref(),
+            Some("1a3a8d39728055360ebd470a18d2a91b4bb5b640907c6701b539bcd9b1ee71ce")
         );
 
         assert_eq!(

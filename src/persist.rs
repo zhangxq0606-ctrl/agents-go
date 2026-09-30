@@ -6,6 +6,7 @@
 
 mod io;
 pub mod plugin_registry;
+pub(crate) mod projects;
 mod restore;
 mod snapshot;
 mod writer;

@@ -139,6 +139,7 @@ impl ClientShellState {
                     return;
                 }
                 if action == crate::input::KeybindAction::WorkspacePicker {
+                    self.task_navigation_cursor = None;
                     self.pending_workspace_highlight = None;
                     self.mobile_switcher_scroll = 0;
                     self.reveal_mobile_workspace = false;
@@ -353,6 +354,7 @@ impl ClientShellState {
             | crate::api::schema::Method::TabFocus(_)
             | crate::api::schema::Method::PaneFocus(_)
             | crate::api::schema::Method::PaneFocusDirection(_) => true,
+            crate::api::schema::Method::ProjectOpen(_) => true,
             crate::api::schema::Method::WorkspaceCreate(params) => params.focus,
             crate::api::schema::Method::TabCreate(params) => params.focus,
             crate::api::schema::Method::PaneSplit(params) => params.focus,
@@ -549,7 +551,65 @@ impl ClientShellState {
             }
         }
         match pending.kind {
+            PendingEndpointKind::ProjectOpen { cwd } => {
+                if result.is_ok() {
+                    if let Some(projects) = self.project_catalogs.get_mut(&self.active_endpoint_id)
+                    {
+                        projects.retain(|project| project.cwd != cwd);
+                    }
+                    self.project_catalog_refresh_at = None;
+                }
+                return (true, Vec::new());
+            }
+            PendingEndpointKind::ProjectCatalog { epoch, reveal } => {
+                if epoch == self.project_catalog_epoch {
+                    if let Ok(crate::api::schema::ResponseResult::ProjectList { projects }) = result
+                    {
+                        let previous = self.project_catalogs.get(&self.active_endpoint_id);
+                        let newly_closed = projects.first().is_some_and(|project| {
+                            previous.is_some_and(|previous| {
+                                previous.first() != Some(project)
+                                    && (!previous.contains(project)
+                                        || previous
+                                            .first()
+                                            .is_some_and(|first| projects.contains(first)))
+                            })
+                        });
+                        if !projects.is_empty() && (newly_closed || reveal) {
+                            self.recent_collapsed = false;
+                            self.recent_scroll = 0;
+                        }
+                        self.project_catalogs
+                            .insert(self.active_endpoint_id.clone(), projects);
+                        self.recent_scroll = self.recent_scroll.min(
+                            self.project_catalogs
+                                .get(&self.active_endpoint_id)
+                                .map_or(0, Vec::len)
+                                .saturating_sub(4),
+                        );
+                    }
+                }
+                return (true, Vec::new());
+            }
             PendingEndpointKind::Generic => {}
+            PendingEndpointKind::TaskCommand { command } => {
+                if let Ok(crate::api::schema::ResponseResult::TabCreated { root_pane, .. }) = result
+                {
+                    let mut outcome = ClientShellInput::default();
+                    self.push_endpoint_method(
+                        crate::api::schema::Method::PaneSendInput(
+                            crate::api::schema::PaneSendInputParams {
+                                pane_id: root_pane.pane_id,
+                                text: command,
+                                keys: vec!["Enter".into()],
+                            },
+                        ),
+                        &mut outcome,
+                    );
+                    return (true, outcome.actions);
+                }
+                return (true, Vec::new());
+            }
             PendingEndpointKind::PaneLinkResolve { .. } => unreachable!("handled above"),
             PendingEndpointKind::ProductAnnouncementDismiss { version, id } => {
                 return match result {

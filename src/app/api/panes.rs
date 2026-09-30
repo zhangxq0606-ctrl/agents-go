@@ -1158,6 +1158,7 @@ impl App {
 
         let mut closed_workspace_id = None;
         if source_workspace_empty && cross_workspace {
+            self.state.remember_closed_project(source_ws_idx);
             self.state.workspaces.remove(source_ws_idx);
             closed_workspace_id = Some(previous_workspace_id.clone());
             if self.state.workspaces.is_empty() {

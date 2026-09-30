@@ -3,6 +3,50 @@ use super::*;
 mod settings_overlay;
 mod worktree_overlays;
 
+fn render_status_info(b: &mut Buffer, text: &str, p: &Palette) -> Option<OverlayRender> {
+    use ratatui::widgets::{Paragraph, Widget, Wrap};
+    let q = popup(b.area, 70, 19)?;
+    let inner = panel(b, q, p.accent, p.panel_bg)?;
+    if inner.width < 20 || inner.height < 4 {
+        return None;
+    }
+    put_text(
+        b,
+        inner.x,
+        inner.y,
+        inner.width,
+        "状态说明",
+        Style::default()
+            .fg(p.text)
+            .bg(p.panel_bg)
+            .add_modifier(Modifier::BOLD),
+    );
+    let close = Rect::new(inner.right().saturating_sub(13), inner.bottom() - 1, 13, 1);
+    button(
+        b,
+        close,
+        " esc close ",
+        Style::default().fg(p.overlay0).bg(p.panel_bg),
+    );
+    Paragraph::new(text)
+        .style(Style::default().fg(p.text).bg(p.panel_bg))
+        .wrap(Wrap { trim: false })
+        .render(
+            Rect::new(
+                inner.x,
+                inner.y + 2,
+                inner.width,
+                inner.height.saturating_sub(3),
+            ),
+            b,
+        );
+    Some(OverlayRender {
+        area: q,
+        cancel: close,
+        ..Default::default()
+    })
+}
+
 #[derive(Default)]
 pub(crate) struct OverlayRender {
     pub(crate) area: Rect,
@@ -64,6 +108,7 @@ pub(crate) fn render_client_overlay(
         ClientShellOverlay::Rename(v) => render_rename_overlay(b, v, p),
         ClientShellOverlay::ConfirmClose(v) => render_confirm_close_overlay(b, v, p),
         ClientShellOverlay::Help(v) => render_help_overlay(b, v, k, p),
+        ClientShellOverlay::StatusInfo(text) => render_status_info(b, text, p),
         ClientShellOverlay::Navigator(v) => {
             render_navigator_overlay(b, v, endpoints, active_endpoint_id, p)
         }

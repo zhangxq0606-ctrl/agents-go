@@ -3829,6 +3829,17 @@
           ],
           "type": "object"
         },
+        "ProjectTarget": {
+          "properties": {
+            "cwd": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "cwd"
+          ],
+          "type": "object"
+        },
         "ReadFormat": {
           "enum": [
             "text",
@@ -4681,6 +4692,54 @@
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "oneOf": [
+        {
+          "properties": {
+            "method": {
+              "const": "project.list",
+              "type": "string"
+            },
+            "params": {
+              "$ref": "#/schemas/request/$defs/EmptyParams"
+            }
+          },
+          "required": [
+            "method",
+            "params"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "method": {
+              "const": "project.open",
+              "type": "string"
+            },
+            "params": {
+              "$ref": "#/schemas/request/$defs/ProjectTarget"
+            }
+          },
+          "required": [
+            "method",
+            "params"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "method": {
+              "const": "project.forget",
+              "type": "string"
+            },
+            "params": {
+              "$ref": "#/schemas/request/$defs/ProjectTarget"
+            }
+          },
+          "required": [
+            "method",
+            "params"
+          ],
+          "type": "object"
+        },
         {
           "properties": {
             "method": {
@@ -9149,6 +9208,22 @@
             }
           ]
         },
+        "ProjectInfo": {
+          "description": "A directory remembered by this server after its workspace was closed.",
+          "properties": {
+            "cwd": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "cwd",
+            "label"
+          ],
+          "type": "object"
+        },
         "ReadFormat": {
           "enum": [
             "text",
@@ -9167,6 +9242,25 @@
         },
         "ResponseResult": {
           "oneOf": [
+            {
+              "properties": {
+                "projects": {
+                  "items": {
+                    "$ref": "#/schemas/success_response/$defs/ProjectInfo"
+                  },
+                  "type": "array"
+                },
+                "type": {
+                  "const": "project_list",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "projects"
+              ],
+              "type": "object"
+            },
             {
               "properties": {
                 "capabilities": {

@@ -121,6 +121,21 @@ pub(crate) fn normalize_cwd_for_launch(path: &std::path::Path) -> std::path::Pat
     normalize_cwd_for_launch_platform(path)
 }
 
+/// Compare project directories without filesystem access, including closed paths.
+pub(crate) fn project_path_key(path: &str) -> String {
+    project_path_key_platform(path)
+}
+
+#[cfg(not(windows))]
+fn project_path_key_platform(path: &str) -> String {
+    let trimmed = path.trim_end_matches('/');
+    if trimmed.is_empty() {
+        "/".into()
+    } else {
+        trimmed.into()
+    }
+}
+
 #[cfg(not(windows))]
 fn normalize_cwd_for_launch_platform(path: &std::path::Path) -> std::path::PathBuf {
     path.to_path_buf()

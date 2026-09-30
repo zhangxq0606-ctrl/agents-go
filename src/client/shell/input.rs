@@ -650,6 +650,7 @@ impl ClientShellState {
 
         self.pending_workspace_highlight = None;
         if key.code == KeyCode::Esc || self.config.keybinds.matches_prefix(key) {
+            self.task_navigation_cursor = None;
             self.mode = self.copy_or_terminal_mode();
             self.navigate_workspace_id = None;
             outcome.repaint = true;
@@ -665,6 +666,7 @@ impl ClientShellState {
             .matches_direct_key(key)
         {
             self.move_navigate_workspace(-1);
+            self.task_navigation_cursor = None;
             outcome.repaint = true;
             return;
         }
@@ -677,11 +679,23 @@ impl ClientShellState {
             .matches_direct_key(key)
         {
             self.move_navigate_workspace(1);
+            self.task_navigation_cursor = None;
             outcome.repaint = true;
             return;
         }
 
         let (code, modifiers) = crate::config::normalize_key_combo((key.code, key.modifiers));
+        if self.config.sidebar_layout == crate::config::SidebarLayoutConfig::Tree
+            && !self.sidebar_collapsed
+            && !self.mobile_layout_active()
+            && !self.workspace_preview_action_blocked()
+            && ((code == KeyCode::Tab && modifiers.is_empty())
+                || (code == KeyCode::BackTab
+                    && (modifiers.is_empty() || modifiers == KeyModifiers::SHIFT)))
+        {
+            self.move_task_tree_focus(if code == KeyCode::Tab { 1 } else { -1 }, outcome);
+            return;
+        }
         if code == KeyCode::Enter && modifiers.is_empty() {
             self.accept_navigate_workspace(outcome);
             return;

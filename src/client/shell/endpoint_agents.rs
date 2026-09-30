@@ -94,6 +94,10 @@ impl ClientShellState {
         pane_id: &str,
         body_height: u16,
     ) {
+        if self.config.sidebar_layout == crate::config::SidebarLayoutConfig::Tree {
+            self.reveal_task_pane(endpoint_id, pane_id);
+            return;
+        }
         if body_height == 0 {
             return;
         }

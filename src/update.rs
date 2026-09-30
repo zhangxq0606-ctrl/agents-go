@@ -1,6 +1,6 @@
 //! Self-update mechanism.
 //!
-//! Checks the hosted herdr.dev update manifest for newer versions.
+//! Checks the Agents Go repository update manifest for newer versions.
 //! Manual `herdr update` downloads and installs the binary.
 //! Background checks only surface availability and release notes.
 //! Uses `curl` as a subprocess for HTTP — no additional Rust HTTP dependencies.
@@ -22,8 +22,10 @@ use std::time::{Duration, Instant};
 use interprocess::local_socket::traits::Stream as _;
 use serde::{Deserialize, Deserializer};
 
-const STABLE_UPDATE_MANIFEST_URL: &str = "https://herdr.dev/latest.json";
-const PREVIEW_UPDATE_MANIFEST_URL: &str = "https://herdr.dev/preview.json";
+const STABLE_UPDATE_MANIFEST_URL: &str =
+    "https://raw.githubusercontent.com/zhangxq0606-ctrl/agents-go/main/distribution/latest.json";
+const PREVIEW_UPDATE_MANIFEST_URL: &str =
+    "https://raw.githubusercontent.com/zhangxq0606-ctrl/agents-go/main/distribution/preview.json";
 const HOMEBREW_FORMULA_API_URL: &str = "https://formulae.brew.sh/api/formula/herdr.json";
 const HERDR_UPDATE_COMMAND: &str = "herdr update";
 const HOMEBREW_UPDATE_COMMAND: &str = "brew update && brew upgrade herdr";
@@ -2107,6 +2109,11 @@ fn homebrew_cellar_keg_root(path: &Path) -> Option<PathBuf> {
 
 /// Manual self-update command (`herdr update`).
 pub fn self_update(options: SelfUpdateOptions) -> Result<Version, String> {
+    if env!("CARGO_PKG_REPOSITORY") != "https://github.com/herdrdev/herdr" {
+        return Err(
+            "self-update is unavailable until the Agents Go release channel is configured".into(),
+        );
+    }
     let channel = UpdateChannel::configured();
 
     if is_homebrew_managed_install() {
@@ -3916,16 +3923,7 @@ mod tests {
 
     #[test]
     fn checked_in_distribution_manifest_matches_update_schema() {
-        #[derive(Deserialize)]
-        struct LegacyUpdateManifest {
-            assets: BTreeMap<String, String>,
-        }
-
         let json = include_str!("../distribution/latest.json");
-        let legacy: LegacyUpdateManifest = serde_json::from_str(json)
-            .expect("distribution/latest.json should keep legacy string asset URLs");
-        assert!(legacy.assets.len() >= 4);
-
         let manifest: UpdateManifest = serde_json::from_str(json)
             .expect("distribution/latest.json should match updater schema");
 
@@ -3934,88 +3932,9 @@ mod tests {
             .expect("metadata")
             .notes_body()
             .is_empty());
-        // distribution/latest.json describes the latest released binaries, not the
-        // current unreleased checkout. Its protocol is updated by the release
-        // flow together with the release assets.
+        // Agents Go has no release assets until its own release pipeline is ready.
         assert!(manifest.protocol.is_some());
-        assert!(manifest.assets.len() >= 4);
-        assert!(manifest.releases.contains_key(&manifest.version));
-
-        for target in [
-            "linux-x86_64",
-            "linux-aarch64",
-            "macos-x86_64",
-            "macos-aarch64",
-        ] {
-            let asset = manifest
-                .assets
-                .get(target)
-                .unwrap_or_else(|| panic!("missing asset URL for {target}"));
-            let url = &asset.url;
-            assert_eq!(
-                manifest.sha256.get(target).map(String::len),
-                Some(64),
-                "missing SHA-256 checksum for {target}"
-            );
-            assert!(
-                url.contains(&format!("/releases/download/v{}/", manifest.version)),
-                "unexpected release URL for {target}: {url}"
-            );
-            assert!(
-                url.ends_with(&format!("herdr-{target}")),
-                "unexpected asset name for {target}: {url}"
-            );
-        }
-
-        if let Some(windows) = manifest.assets.get("windows-x86_64") {
-            assert!(windows.url.ends_with("/herdr-windows-x86_64.zip"));
-            assert_eq!(
-                manifest.sha256.get("windows-x86_64").map(String::len),
-                Some(64),
-                "missing SHA-256 checksum for windows-x86_64"
-            );
-        }
-
-        for (version, release) in &manifest.releases {
-            let assets = release
-                .get("assets")
-                .and_then(serde_json::Value::as_object)
-                .unwrap_or_else(|| panic!("missing assets for release {version}"));
-            for target in [
-                "linux-x86_64",
-                "linux-aarch64",
-                "macos-x86_64",
-                "macos-aarch64",
-            ] {
-                let asset = assets
-                    .get(target)
-                    .cloned()
-                    .unwrap_or_else(|| panic!("missing asset URL for {version} {target}"));
-                let asset: AssetRef = serde_json::from_value(asset)
-                    .unwrap_or_else(|_| panic!("invalid asset for {version} {target}"));
-                let url = &asset.url;
-                assert!(
-                    url.contains(&format!("/releases/download/v{version}/")),
-                    "unexpected release URL for {version} {target}: {url}"
-                );
-                assert!(
-                    url.ends_with(&format!("herdr-{target}")),
-                    "unexpected asset name for {version} {target}: {url}"
-                );
-            }
-            if let Some(windows) = assets.get("windows-x86_64") {
-                let windows: AssetRef = serde_json::from_value(windows.clone())
-                    .unwrap_or_else(|_| panic!("invalid Windows asset for release {version}"));
-                assert!(windows.url.ends_with("/herdr-windows-x86_64.zip"));
-                let checksums = release
-                    .get("sha256")
-                    .and_then(serde_json::Value::as_object)
-                    .unwrap_or_else(|| panic!("missing checksums for release {version}"));
-                assert!(checksums
-                    .get("windows-x86_64")
-                    .and_then(serde_json::Value::as_str)
-                    .is_some_and(|value| value.len() == 64));
-            }
-        }
+        assert!(manifest.assets.is_empty());
+        assert!(manifest.releases.is_empty());
     }
 }

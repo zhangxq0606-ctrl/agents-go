@@ -525,19 +525,40 @@ impl ClientShellState {
             .iter()
             .filter(|hit| hit.endpoint_id == self.active_endpoint_id && !hit.indented)
             .filter(|hit| {
-                hit.group_toggle.as_ref().is_none_or(|(_, key)| {
-                    snapshot
-                        .workspaces
-                        .iter()
-                        .find(|workspace| {
-                            workspace.worktree.as_ref().is_some_and(|worktree| {
-                                worktree.key == *key && !worktree.is_linked_worktree
+                self.config.sidebar_layout == crate::config::SidebarLayoutConfig::Tree
+                    || hit.group_toggle.as_ref().is_none_or(|(_, key)| {
+                        snapshot
+                            .workspaces
+                            .iter()
+                            .find(|workspace| {
+                                workspace.worktree.as_ref().is_some_and(|worktree| {
+                                    worktree.key == *key && !worktree.is_linked_worktree
+                                })
                             })
-                        })
-                        .is_some_and(|workspace| workspace.workspace_id == hit.workspace_id)
-                })
+                            .is_some_and(|workspace| workspace.workspace_id == hit.workspace_id)
+                    })
             })
-            .map(|hit| (Some(hit.workspace_id.clone()), hit.rect.y.saturating_sub(1)))
+            .map(|hit| {
+                // Tree spacing can put another root of the same repository far from
+                // its first root. Its boundary still means "before the whole group".
+                let target =
+                    if self.config.sidebar_layout == crate::config::SidebarLayoutConfig::Tree {
+                        hit.group_toggle
+                            .as_ref()
+                            .and_then(|(_, key)| {
+                                snapshot.workspaces.iter().find(|workspace| {
+                                    workspace.worktree.as_ref().is_some_and(|worktree| {
+                                        worktree.key == *key && !worktree.is_linked_worktree
+                                    })
+                                })
+                            })
+                            .map(|workspace| workspace.workspace_id.clone())
+                            .unwrap_or_else(|| hit.workspace_id.clone())
+                    } else {
+                        hit.workspace_id.clone()
+                    };
+                (Some(target), hit.rect.y.saturating_sub(1))
+            })
             .collect::<Vec<_>>();
         let empty_collapsed_groups = HashSet::new();
         let collapsed_groups = self
@@ -572,7 +593,24 @@ impl ClientShellState {
                     .get(entry.index)
                     .map(|workspace| workspace.workspace_id.clone())
             });
-            let row = last_hit.rect.bottom();
+            let row = if self.config.sidebar_layout == crate::config::SidebarLayoutConfig::Tree {
+                self.hits
+                    .endpoint_agents
+                    .iter()
+                    .filter(|(_, endpoint, pane)| {
+                        endpoint == &self.active_endpoint_id
+                            && snapshot.panes.iter().any(|candidate| {
+                                &candidate.pane_id == pane
+                                    && candidate.workspace_id == last_hit.workspace_id
+                            })
+                    })
+                    .map(|(rect, _, _)| rect.bottom())
+                    .max()
+                    .unwrap_or(last_hit.rect.bottom())
+                    .max(last_hit.rect.bottom())
+            } else {
+                last_hit.rect.bottom()
+            };
             if row < self.hits.new_workspace.y {
                 slots.push((before, row));
             }
@@ -677,6 +715,9 @@ impl ClientShellState {
     }
 
     pub(super) fn handle_mouse(&mut self, mouse: MouseEvent, outcome: &mut ClientShellInput) {
+        if matches!(mouse.kind, MouseEventKind::Down(_)) {
+            self.task_navigation_cursor = None;
+        }
         self.update_link_hover(mouse, outcome);
         let point = (mouse.column, mouse.row);
         if self.mode == ClientShellMode::Navigate
@@ -688,6 +729,15 @@ impl ClientShellState {
             self.mode = self.copy_or_terminal_mode();
             self.navigate_workspace_id = None;
             outcome.repaint = true;
+        }
+        if matches!(self.overlay, Some(ClientShellOverlay::StatusInfo(_))) {
+            if mouse.kind == MouseEventKind::Down(MouseButton::Left)
+                && super::contains(self.hits.overlay_cancel, point)
+            {
+                self.overlay = None;
+                outcome.repaint = true;
+            }
+            return;
         }
         if matches!(self.overlay, Some(ClientShellOverlay::Onboarding)) {
             if mouse.kind == MouseEventKind::Down(MouseButton::Left)
@@ -1778,6 +1828,26 @@ impl ClientShellState {
 
         match mouse.kind {
             MouseEventKind::Down(MouseButton::Right) => {
+                if let Some((_, cwd)) = self
+                    .hits
+                    .recent_projects
+                    .iter()
+                    .find(|(rect, _)| super::contains(*rect, point))
+                {
+                    self.overlay =
+                        Some(ClientShellOverlay::ContextMenu(ClientContextMenuOverlay {
+                            target: ClientContextMenuTarget::RecentProject {
+                                cwd: cwd.clone(),
+                                can_open: self.project_method_available("project.open"),
+                                can_forget: self.project_method_available("project.forget"),
+                            },
+                            x: point.0,
+                            y: point.1,
+                            highlighted: 0,
+                        }));
+                    outcome.repaint = true;
+                    return;
+                }
                 let pane_hit = self
                     .hits
                     .panes
@@ -1835,6 +1905,19 @@ impl ClientShellState {
                     .flatten();
                 if let Some(workspace_id) = workspace_id {
                     self.open_workspace_context_menu(workspace_id, mouse.column, mouse.row);
+                    outcome.repaint = true;
+                    return;
+                }
+                let task_pane = self
+                    .hits
+                    .endpoint_agents
+                    .iter()
+                    .find(|(rect, endpoint_id, _)| {
+                        *endpoint_id == self.active_endpoint_id && super::contains(*rect, point)
+                    })
+                    .map(|(_, _, pane_id)| pane_id.clone());
+                if let Some(pane_id) = task_pane {
+                    self.open_pane_context_menu(pane_id, mouse.column, mouse.row);
                     outcome.repaint = true;
                     return;
                 }
@@ -1906,6 +1989,19 @@ impl ClientShellState {
                     self.agent_scroll = next;
                     outcome.repaint = true;
                 }
+            }
+            MouseEventKind::ScrollUp if super::contains(self.hits.recent_body, point) => {
+                self.recent_scroll = self.recent_scroll.saturating_sub(1);
+                outcome.repaint = true;
+            }
+            MouseEventKind::ScrollDown if super::contains(self.hits.recent_body, point) => {
+                let max = self
+                    .project_catalogs
+                    .get(&self.active_endpoint_id)
+                    .map_or(0, Vec::len)
+                    .saturating_sub(usize::from(self.hits.recent_body.height));
+                self.recent_scroll = self.recent_scroll.saturating_add(1).min(max);
+                outcome.repaint = true;
             }
             MouseEventKind::ScrollUp if super::contains(self.hits.workspace_body, point) => {
                 let next = self.workspace_scroll.saturating_sub(1);
@@ -2028,6 +2124,22 @@ impl ClientShellState {
                 if self.handle_endpoint_machine_click(point, outcome) {
                     return;
                 }
+                if super::contains(self.hits.recent_toggle, point) {
+                    self.recent_collapsed = !self.recent_collapsed;
+                    self.project_catalog_refresh_at = None;
+                    outcome.repaint = true;
+                    return;
+                }
+                if let Some((_, cwd)) = self
+                    .hits
+                    .recent_projects
+                    .iter()
+                    .find(|(rect, _)| super::contains(*rect, point))
+                {
+                    let cwd = cwd.clone();
+                    self.open_recent_project(cwd, outcome);
+                    return;
+                }
                 if super::contains(self.hits.global_launcher, point) {
                     self.toggle_global_menu();
                     outcome.repaint = true;
@@ -2082,6 +2194,32 @@ impl ClientShellState {
                     outcome.repaint = true;
                     outcome.resize = true;
                     self.persist_chrome_preferences(outcome);
+                    return;
+                }
+                let task_toggle = self
+                    .hits
+                    .task_toggles
+                    .iter()
+                    .find(|(rect, _, _)| super::contains(*rect, point))
+                    .cloned();
+                if let Some((_, endpoint_id, workspace_id)) = task_toggle {
+                    let key = (endpoint_id, workspace_id);
+                    if !self.collapsed_tasks.remove(&key) {
+                        self.collapsed_tasks.insert(key);
+                    }
+                    outcome.repaint = true;
+                    return;
+                }
+                let task_add = self
+                    .hits
+                    .task_add
+                    .iter()
+                    .find(|(rect, _, _)| super::contains(*rect, point))
+                    .cloned();
+                if let Some((_, endpoint_id, workspace_id)) = task_add {
+                    if endpoint_id == self.active_endpoint_id {
+                        self.create_task_session(workspace_id, outcome);
+                    }
                     return;
                 }
                 let group_toggle = self.hits.workspaces.iter().find_map(|hit| {

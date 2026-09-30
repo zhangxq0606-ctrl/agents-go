@@ -4,6 +4,8 @@ use super::*;
 fn mouse_hits_use_stable_workspace_tab_and_pane_ids() {
     let config = ClientShellConfig::from_config(&Config::default());
     let mut state = ClientShellState::new(config);
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     state.set_snapshot(Box::new(snapshot()));
     state.set_pane_surface(surface());
     state.compose(106, 20).expect("composed frame");
@@ -35,7 +37,7 @@ fn mouse_hits_use_stable_workspace_tab_and_pane_ids() {
 
     let pane = state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
         kind: MouseEventKind::Down(MouseButton::Left),
-        column: 27,
+        column: state.hits.panes[0].inner_rect.x + 1,
         row: 1,
         modifiers: KeyModifiers::empty(),
     })]);
@@ -93,6 +95,8 @@ fn collapsed_workspace_jitter_remains_a_click() {
 fn grouped_worktrees_render_parent_branch_and_indented_child() {
     let config = ClientShellConfig::from_config(&Config::default());
     let mut state = ClientShellState::new(config);
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     let mut snapshot = snapshot();
     snapshot.workspaces[0].worktree = Some(ClientShellWorktree {
         key: "repo".into(),
@@ -232,13 +236,13 @@ fn duplicate_repo_parents_remain_visible_and_focusable_when_collapsed() {
             let duplicate = state.hits.workspaces[1].rect;
             state.handle_raw_events(vec![RawInputEvent::Mouse(MouseEvent {
                 kind: MouseEventKind::Down(MouseButton::Left),
-                column: duplicate.x + 2,
+                column: duplicate.x + 6,
                 row: duplicate.y,
                 modifiers: KeyModifiers::empty(),
             })]);
             let click = state.handle_raw_events(vec![RawInputEvent::Mouse(MouseEvent {
                 kind: MouseEventKind::Up(MouseButton::Left),
-                column: duplicate.x + 2,
+                column: duplicate.x + 6,
                 row: duplicate.y,
                 modifiers: KeyModifiers::empty(),
             })]);
@@ -257,7 +261,12 @@ fn duplicate_repo_parents_remain_visible_and_focusable_when_collapsed() {
             let Some(ClientShellOverlay::ContextMenu(menu)) = state.overlay.as_ref() else {
                 panic!("repository workspace context menu");
             };
-            assert_eq!(menu.items()[1].label, "Close");
+            let close_index = menu
+                .items()
+                .iter()
+                .position(|item| item.action == ClientContextMenuAction::Close)
+                .expect("close item");
+            assert_eq!(menu.items()[close_index].label, "Close");
             assert_eq!(
                 menu.items()
                     .iter()
@@ -273,7 +282,7 @@ fn duplicate_repo_parents_remain_visible_and_focusable_when_collapsed() {
                 state.set_snapshot(Box::new(replacement));
             }
             let mut close = ClientShellInput::default();
-            state.activate_context_menu_item(1, &mut close);
+            state.activate_context_menu_item(close_index, &mut close);
             if confirm_close {
                 assert!(close.actions.is_empty());
                 assert!(matches!(state.overlay.as_ref(),
@@ -309,14 +318,14 @@ fn workspace_click_waits_for_release_and_drag_reorders_by_stable_id() {
 
     let down = state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
         kind: MouseEventKind::Down(MouseButton::Left),
-        column: first.x + 2,
+        column: first.x + 6,
         row: first.y,
         modifiers: KeyModifiers::empty(),
     })]);
     assert!(down.actions.is_empty());
     let drag = state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
         kind: MouseEventKind::Drag(MouseButton::Left),
-        column: third.x + 2,
+        column: third.x + 6,
         row: third.bottom(),
         modifiers: KeyModifiers::empty(),
     })]);
@@ -337,7 +346,7 @@ fn workspace_click_waits_for_release_and_drag_reorders_by_stable_id() {
     let release =
         state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
             kind: MouseEventKind::Up(MouseButton::Left),
-            column: third.x + 2,
+            column: third.x + 6,
             row: third.bottom(),
             modifiers: KeyModifiers::empty(),
         })]);
@@ -355,13 +364,13 @@ fn workspace_click_waits_for_release_and_drag_reorders_by_stable_id() {
     let second = state.hits.workspaces[1].rect;
     state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
         kind: MouseEventKind::Down(MouseButton::Left),
-        column: second.x + 2,
+        column: second.x + 6,
         row: second.y,
         modifiers: KeyModifiers::empty(),
     })]);
     let click = state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
         kind: MouseEventKind::Up(MouseButton::Left),
-        column: second.x + 2,
+        column: second.x + 6,
         row: second.y,
         modifiers: KeyModifiers::empty(),
     })]);
@@ -410,7 +419,7 @@ fn duplicate_repo_parent_drag_does_not_target_its_own_move_block() {
     ] {
         state.handle_raw_events(vec![RawInputEvent::Mouse(MouseEvent {
             kind,
-            column: rect.x + 2,
+            column: rect.x + 6,
             row,
             modifiers: KeyModifiers::empty(),
         })]);
@@ -422,7 +431,7 @@ fn duplicate_repo_parent_drag_does_not_target_its_own_move_block() {
     );
     let drop = state.handle_raw_events(vec![RawInputEvent::Mouse(MouseEvent {
         kind: MouseEventKind::Up(MouseButton::Left),
-        column: target.x + 2,
+        column: target.x + 6,
         row: target.y.saturating_sub(1),
         modifiers: KeyModifiers::empty(),
     })]);
@@ -466,19 +475,19 @@ fn workspace_drag_moves_parent_worktree_as_one_block_and_rejects_child() {
 
     state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
         kind: MouseEventKind::Down(MouseButton::Left),
-        column: parent.x + 2,
+        column: parent.x + 6,
         row: parent.y,
         modifiers: KeyModifiers::empty(),
     })]);
     state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
         kind: MouseEventKind::Drag(MouseButton::Left),
-        column: other.x + 2,
+        column: other.x + 6,
         row: other.bottom(),
         modifiers: KeyModifiers::empty(),
     })]);
     let moved = state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
         kind: MouseEventKind::Up(MouseButton::Left),
-        column: other.x + 2,
+        column: other.x + 6,
         row: other.bottom(),
         modifiers: KeyModifiers::empty(),
     })]);
@@ -496,14 +505,14 @@ fn workspace_drag_moves_parent_worktree_as_one_block_and_rejects_child() {
     state.compose(106, 24).expect("worktree child");
     state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
         kind: MouseEventKind::Down(MouseButton::Left),
-        column: child.x + 2,
+        column: child.x + 6,
         row: child.y,
         modifiers: KeyModifiers::empty(),
     })]);
     let dragging_child =
         state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
             kind: MouseEventKind::Drag(MouseButton::Left),
-            column: other.x + 2,
+            column: other.x + 6,
             row: other.bottom(),
             modifiers: KeyModifiers::empty(),
         })]);
@@ -529,19 +538,19 @@ fn workspace_drag_moves_parent_worktree_as_one_block_and_rejects_child() {
     ] {
         state.handle_raw_events(vec![RawInputEvent::Mouse(MouseEvent {
             kind: MouseEventKind::Down(MouseButton::Left),
-            column: source.x + 2,
+            column: source.x + 6,
             row: source.y,
             modifiers: KeyModifiers::empty(),
         })]);
         state.handle_raw_events(vec![RawInputEvent::Mouse(MouseEvent {
             kind: MouseEventKind::Drag(MouseButton::Left),
-            column: source.x + 2,
+            column: source.x + 6,
             row: target_row,
             modifiers: KeyModifiers::empty(),
         })]);
         let moved = state.handle_raw_events(vec![RawInputEvent::Mouse(MouseEvent {
             kind: MouseEventKind::Up(MouseButton::Left),
-            column: source.x + 2,
+            column: source.x + 6,
             row: target_row,
             modifiers: KeyModifiers::empty(),
         })]);
@@ -708,6 +717,8 @@ fn agent_sidebar_honors_priority_symbols_tokens_and_stable_hits() {
         ],
     );
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&config));
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     state.set_snapshot(Box::new(projected));
     state.set_pane_surface(surface());
 
@@ -813,6 +824,8 @@ fn muted_agent_sidebar_rows_do_not_stack_terminal_faint() {
         focused: true,
     }];
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     state.set_snapshot(Box::new(projected));
     state.set_pane_surface(surface());
     let frame = state.compose(106, 30).expect("agent sidebar frame");
@@ -839,6 +852,8 @@ fn workspace_state_text_does_not_stack_terminal_faint() {
         vec![SpaceSidebarToken::StateText],
     ];
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&config));
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     state.set_snapshot(Box::new(snapshot()));
     state.set_pane_surface(surface());
     let frame = state.compose(106, 30).expect("workspace sidebar frame");
@@ -915,6 +930,8 @@ fn active_agent_view_controls_sidebar_order_and_focus_indices() {
     projected.agent_view_label = Some("review".into());
     projected.agent_order = vec!["pane_2".into(), "pane_3".into()];
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     state.set_snapshot(Box::new(projected));
     state.set_pane_surface(surface());
     state.compose(106, 30).expect("filtered agent sidebar");
@@ -988,6 +1005,8 @@ fn agent_sort_toggle_is_client_local_and_persists_per_endpoint() {
     let config =
         ClientShellConfig::from_config(&Config::default()).with_preferences_path(path.clone());
     let mut state = ClientShellState::new(config);
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     state.set_snapshot(Box::new(projected));
     state.set_pane_surface(surface());
     state.compose(106, 30).expect("agent sidebar frame");

@@ -242,6 +242,11 @@ pub(super) fn render_expanded(
     state: &mut ShellRenderState<'_>,
     hits: &mut ShellHitMap,
 ) {
+    if config.sidebar_layout == crate::config::SidebarLayoutConfig::Tree && !state.sidebar_collapsed
+    {
+        super::task_tree::render(buffer, area, active_snapshot, config, state, hits);
+        return;
+    }
     let palette = &config.palette;
     super::render::render_sidebar_background(buffer, area, palette);
     hits.sidebar_divider = if area.is_empty() {
@@ -587,7 +592,7 @@ fn active_endpoint_label<'a>(state: &'a ShellRenderState<'_>) -> &'a str {
         .map_or("Local", |endpoint| endpoint.label.as_str())
 }
 
-fn render_endpoint_row(
+pub(super) fn render_endpoint_row(
     buffer: &mut Buffer,
     rect: Rect,
     marker: &str,

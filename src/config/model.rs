@@ -40,8 +40,8 @@ impl Default for UpdateConfig {
     fn default() -> Self {
         Self {
             channel: default_update_channel(),
-            version_check: true,
-            manifest_check: true,
+            version_check: false,
+            manifest_check: false,
         }
     }
 }
@@ -140,6 +140,14 @@ pub enum SidebarCollapsedModeConfig {
     #[default]
     Compact,
     Hidden,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SidebarLayoutConfig {
+    #[default]
+    Tree,
+    Split,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -940,12 +948,14 @@ pub struct UiConfig {
     pub sidebar_width: u16,
     /// Minimum sidebar width (columns) when expanded. Default: 18.
     pub sidebar_min_width: u16,
-    /// Maximum sidebar width (columns) when expanded. Default: 36.
+    /// Maximum sidebar width (columns) when expanded. Default: 44.
     pub sidebar_max_width: u16,
     /// Start with the sidebar collapsed. Default: false.
     pub sidebar_start_collapsed: bool,
     /// Collapsed sidebar presentation. Default: compact.
     pub sidebar_collapsed_mode: SidebarCollapsedModeConfig,
+    /// Expanded sidebar presentation. Default: tree.
+    pub sidebar_layout: SidebarLayoutConfig,
     /// Terminal width at or below which Herdr uses the mobile single-column layout. Default: 64.
     pub mobile_width_threshold: u16,
     /// Capture mouse input for Herdr's mouse UI. Default: true.
@@ -1195,11 +1205,12 @@ impl Default for WorktreesConfig {
 impl Default for UiConfig {
     fn default() -> Self {
         Self {
-            sidebar_width: 26,
+            sidebar_width: 30,
             sidebar_min_width: 18,
-            sidebar_max_width: 36,
+            sidebar_max_width: 44,
             sidebar_start_collapsed: false,
             sidebar_collapsed_mode: SidebarCollapsedModeConfig::Compact,
+            sidebar_layout: SidebarLayoutConfig::Tree,
             mobile_width_threshold: DEFAULT_MOBILE_WIDTH_THRESHOLD,
             mouse_capture: true,
             copy_on_select: true,
@@ -1333,8 +1344,8 @@ mod tests {
     fn update_config_defaults_and_parses() {
         let default_config = Config::default();
         assert_eq!(default_config.update.channel, default_update_channel());
-        assert!(default_config.update.version_check);
-        assert!(default_config.update.manifest_check);
+        assert!(!default_config.update.version_check);
+        assert!(!default_config.update.manifest_check);
 
         let toml = r#"
 [update]
@@ -1670,7 +1681,7 @@ cjk_ime_agents = ["claude", "codex"]
     fn sidebar_bounds_default_and_parse() {
         let default_config = Config::default();
         assert_eq!(default_config.ui.sidebar_min_width, 18);
-        assert_eq!(default_config.ui.sidebar_max_width, 36);
+        assert_eq!(default_config.ui.sidebar_max_width, 44);
         assert_eq!(
             default_config.ui.mobile_width_threshold,
             DEFAULT_MOBILE_WIDTH_THRESHOLD
@@ -1718,6 +1729,18 @@ sidebar_collapsed_mode = "hidden"
             config.ui.sidebar_collapsed_mode,
             SidebarCollapsedModeConfig::Hidden
         );
+    }
+
+    #[test]
+    fn sidebar_layout_defaults_tree_and_accepts_split() {
+        assert_eq!(
+            Config::default().ui.sidebar_layout,
+            SidebarLayoutConfig::Tree
+        );
+        let config: Config =
+            toml::from_str("[ui]\nsidebar_layout = 'split'").expect("split config");
+        assert_eq!(config.ui.sidebar_layout, SidebarLayoutConfig::Split);
+        assert!(toml::from_str::<Config>("[ui]\nsidebar_layout = 'unknown'").is_err());
     }
 
     #[test]

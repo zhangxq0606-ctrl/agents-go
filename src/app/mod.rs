@@ -136,6 +136,7 @@ pub struct App {
     startup_per_agent_delay: Duration,
     next_agent_resume_at: Option<Instant>,
     pub(crate) session_save_deadline: Option<Instant>,
+    project_save_retry_at: Option<Instant>,
     pub(crate) session_save_thread: Option<std::thread::JoinHandle<()>>,
     session_writer: Arc<std::sync::Mutex<crate::persist::SessionWriter>>,
     pane_exit_checkpoint_pending: bool,
@@ -450,6 +451,12 @@ impl App {
             public_pane_id_aliases: std::collections::HashMap::new(),
             workspaces,
             active,
+            recent_projects: if policy.persist_session {
+                crate::persist::projects::load()
+            } else {
+                Vec::new()
+            },
+            projects_dirty: false,
             previous_pane_focus: None,
             selected,
             mode,
@@ -601,6 +608,7 @@ impl App {
             ),
             next_agent_resume_at: None,
             session_save_deadline: None,
+            project_save_retry_at: None,
             session_save_thread: None,
             session_writer,
             pane_exit_checkpoint_pending: false,

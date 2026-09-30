@@ -89,7 +89,7 @@ fn focused_last_overflow_tab_shows_its_full_label() {
             .expect("reporter's overflowing strip");
         assert_eq!(
             state.hits.new_tab.right() - state.hits.tab_scroll_left.x,
-            107
+            133 - state.sidebar_width
         );
         let rect = state
             .hits
@@ -160,6 +160,8 @@ fn focused_workspace_change_reveals_new_workspace_in_full_sidebar() {
         .collect();
 
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     state.set_snapshot(Box::new(initial));
     state.set_pane_surface(surface());
     state.compose(106, 20).expect("full sidebar");
@@ -194,6 +196,8 @@ fn focused_workspace_change_reveals_new_workspace_in_full_sidebar() {
 #[test]
 fn client_owned_sidebar_dividers_resize_live() {
     let mut state = ClientShellState::new(ClientShellConfig::from_config(&Config::default()));
+    // This test protects the configurable split sidebar.
+    state.config.sidebar_layout = crate::config::SidebarLayoutConfig::Split;
     state.set_snapshot(Box::new(snapshot()));
     state.set_pane_surface(surface());
     state.compose(106, 30).expect("expanded sidebar");
@@ -325,7 +329,11 @@ fn context_menus_capture_stable_targets_and_route_actions() {
         .iter()
         .any(|item| item.action == ClientContextMenuAction::NewWorktree));
     state.compose(106, 20).expect("workspace context menu");
-    let rename = state.hits.context_menu_rows[0].0;
+    let rename_index = workspace_items
+        .iter()
+        .position(|item| item.action == ClientContextMenuAction::Rename)
+        .expect("rename item");
+    let rename = state.hits.context_menu_rows[rename_index].0;
     state.handle_raw_events(vec![RawInputEvent::Mouse(crossterm::event::MouseEvent {
         kind: MouseEventKind::Down(MouseButton::Left),
         column: rename.x + 1,
