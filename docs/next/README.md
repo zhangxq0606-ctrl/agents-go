@@ -1,45 +1,48 @@
 <!-- Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE. -->
 # Agents Go
 
-A terminal workspace for AI coding agents, with a visual project and conversation tree.
+一个面向 AI 编程智能体的终端工作台，用可视化任务树组织项目与终端对话。
 
-Agents Go is a modified version of [Herdr](https://github.com/herdrdev/herdr), adding a project and terminal conversation tree, visible agent activity, recent-project recovery, and Git branch labels. The CLI and executable keep the name `herdr`; this repository is not an official Herdr release.
+Agents Go 是 [Herdr](https://github.com/herdrdev/herdr) 的改造版，增加了项目与终端对话任务树、智能体运行状态、最近项目恢复和 Git 分支显示。命令行与可执行文件仍叫 `herdr`，本仓库不是 Herdr 官方版本。
 
-Automatic update checks, self-updates, and automatic remote-server downloads are disabled. This repository currently provides source code; inherited Herdr installers and release documentation describe the upstream product.
+后台更新检查、自更新和远程服务器自动下载目前关闭。本仓库提供源码；继承的 Herdr 安装脚本与发布文档介绍的是上游产品。
 
-[中文说明](README.zh-CN.md)
+[English](README.en.md)
 
-## Build and develop
+## 构建与开发
 
-The repository pins its Rust toolchain in rust-toolchain.toml. Install Rust, Zig 0.16, Python, Bun, and just as required by the platform build.
+Rust 工具链版本由 rust-toolchain.toml 固定。按平台准备 Rust、Zig 0.16、Python、Bun 和 just 等构建工具。
 
-On Windows:
+Windows 打包构建：
 
     just build
 
-Start the packaged Windows build in PowerShell:
+在 PowerShell 中启动：
 
     & .\target\release\herdr.exe --session agents-go
 
-For a debug build, run `cargo build --locked` and start `& .\target\debug\herdr.exe --session agents-go`.
+如需调试版：
 
-Windows is the manually verified platform for this fork. Other platform build paths are inherited from Herdr and have not been manually verified for these modifications.
+    cargo build --locked
+    & .\target\debug\herdr.exe --session agents-go
 
-Run tests and checks:
+本改造版目前在 Windows 上进行过手动验证。其他平台的构建路径沿用 Herdr，尚未手动验证这些改动。
+
+运行测试与检查：
 
     just test
     just check
 
-The Windows build recipe packages the required ConPTY runtime. A successful build does not replace manual verification of terminal rendering and interaction.
+Windows 构建配方会打包所需的 ConPTY 运行组件。编译成功后仍需手动检查终端中的显示和交互。
 
-## Known check limitations
+## 已知检查限制
 
-The project owner manually verified directory changes, archiving after closing all conversations, reopening recent projects, and retaining history after restart. The full automated suite has not completed on the development machine: its filesystem does not support the EFS test fixture, and two project-reopen tests that create real terminals did not finish. These limitations are recorded rather than claimed as passing checks.
+项目维护者已手动验证切换目录、关闭全部对话后归档、点击最近项目重开，以及重启后的历史记录保留。开发机上的完整自动测试尚未全部完成：文件系统不支持 EFS 测试，两项创建真实终端的项目重开测试未能结束。这些限制保留记录，不视为测试通过。
 
-## Upstream relationship
+## 上游关系
 
-The source is derived from herdrdev/herdr and retains its Apache-2.0 license. The project aims to preserve useful upstream terminal and agent-runtime improvements while developing its own task-tree experience. Upstream changes are reviewed and integrated selectively; they are not synchronized automatically.
+本项目源自 herdrdev/herdr，并保留 Apache-2.0 许可证。项目会继续关注 Herdr 的终端、智能体运行时及性能改进，并经审查后选择性集成；不会自动同步上游改动。
 
-## License
+## 许可证
 
-Apache-2.0. See [LICENSE](LICENSE), [NOTICE](NOTICE), and the retained third-party license and notice files. Modified source files carry change notices; JSON files use adjacent `.license` notices.
+项目采用 Apache-2.0。请查阅 [LICENSE](LICENSE)、[NOTICE](NOTICE) 及保留的第三方许可证与归属文件。修改的源文件已注明改动；JSON 文件的声明放在相邻的 `.license` 文件中。

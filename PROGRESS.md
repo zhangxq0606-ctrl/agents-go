@@ -18,6 +18,7 @@ Agents Go 已公开于 https://github.com/zhangxq0606-ctrl/agents-go；默认分
 - README 与项目协作规范已改写为 Agents Go 方向，并说明 Herdr 来源和 Apache-2.0 许可证。
 - Agents Go 的 Cargo 仓库元数据、调试/正式配置目录、更新清单地址、Issue 模板和维护者名单已与本仓库对齐；版本检查默认关闭，Agents Go 发布渠道就绪前阻止手动更新和远程服务器自动下载。
 - 稳定版与预览版分发清单已换为空资产占位；Herdr 的发布、网站部署和 issue 关闭任务保留了仅在官方仓库执行的条件。
+- README 默认语言改为中文（2026-10-01）：根目录与 docs/next 的 `README.md` 换为中文，原英文内容转为 `README.en.md`，删除 `README.zh-CN.md`；同步更新 `scripts/docs/versions.mjs`、`versions.integration.test.ts`、`scripts/release.py`、`justfile`、`.github/workflows/release.yml` 中的文件名引用。`bun test scripts/docs/` 7 项通过。
 
 ## 进行中
 
@@ -31,6 +32,7 @@ Agents Go 已公开于 https://github.com/zhangxq0606-ctrl/agents-go；默认分
 
 ## 最近完成
 
+- 2026-10-01：README 默认语言改为中文，英文版转为 `README.en.md`；同步 docs/next 与发布流水线（versions.mjs、release.py、justfile、release.yml）中的文件名引用，删除 `README.zh-CN.md`。`bun test scripts/docs/` 7 项通过。
 - 2026-10-01：侧栏四项细节优化完成并通过针对性验证（`cargo fmt --check`、`clippy -D warnings`、`task_tree` 27 项、`context/menu` 52 项回归），用户重启手动查看确认：分支标记 `▏`、最近项目行高 2、右键菜单中文化、运行状态 2×3 点阵提速。改动文件：`src/client/shell/{task_tree,context_menu,mouse}.rs` 及对应测试。
 - 2026-10-01：main 已推送，GitHub 仓库已改为公开，默认分支为 main；README、LICENSE、NOTICE 的 Git blob 与本地一致。保留完整上游提交历史，本次未追加功能测试或构建。
 - 2026-10-01：用户手动验收核心归档/恢复链路通过；公开准备中补齐修改声明和第三方归属指针，扫描 2,904 个文本文件未发现命中的凭据模式或个人路径。LICENSE 附录占位符为 Apache 标准示例，保留原文。
