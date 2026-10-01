@@ -23,25 +23,25 @@ impl ClientContextMenuOverlay {
                 items
             }
             ClientContextMenuTarget::Workspace { is_git: false, .. } => {
-                vec![item("Rename", Action::Rename), item("Close", Action::Close)]
+                vec![item("重命名", Action::Rename), item("关闭", Action::Close)]
             }
             ClientContextMenuTarget::Workspace {
                 is_linked_worktree: false,
                 has_worktree_children: false,
                 ..
             } => vec![
-                item("Rename", Action::Rename),
-                item("Close", Action::Close),
-                item("New worktree", Action::NewWorktree),
-                item("Open worktree...", Action::OpenWorktree),
+                item("重命名", Action::Rename),
+                item("关闭", Action::Close),
+                item("新建 worktree", Action::NewWorktree),
+                item("打开 worktree…", Action::OpenWorktree),
             ],
             ClientContextMenuTarget::Workspace {
                 is_linked_worktree: true,
                 ..
             } => vec![
-                item("Rename", Action::Rename),
-                item("Close", Action::Close),
-                item("Delete worktree checkout...", Action::RemoveWorktree),
+                item("重命名", Action::Rename),
+                item("关闭", Action::Close),
+                item("删除 worktree 检出…", Action::RemoveWorktree),
             ],
             ClientContextMenuTarget::Workspace {
                 has_worktree_children: true,
@@ -49,22 +49,26 @@ impl ClientContextMenuOverlay {
                 collapsed,
                 ..
             } => vec![
-                item("Rename", Action::Rename),
+                item("重命名", Action::Rename),
                 item(
-                    if *close_group { "Close group" } else { "Close" },
+                    if *close_group {
+                        "关闭分组"
+                    } else {
+                        "关闭"
+                    },
                     Action::Close,
                 ),
-                item("New worktree", Action::NewWorktree),
-                item("Open worktree...", Action::OpenWorktree),
+                item("新建 worktree", Action::NewWorktree),
+                item("打开 worktree…", Action::OpenWorktree),
                 item(
-                    if *collapsed { "Expand" } else { "Collapse" },
+                    if *collapsed { "展开" } else { "折叠" },
                     Action::ToggleGroup,
                 ),
             ],
             ClientContextMenuTarget::Tab { .. } => vec![
-                item("New tab", Action::NewTab),
-                item("Rename", Action::Rename),
-                item("Close", Action::Close),
+                item("新建标签页", Action::NewTab),
+                item("重命名", Action::Rename),
+                item("关闭", Action::Close),
             ],
             ClientContextMenuTarget::Pane {
                 source_pane_id,
@@ -73,36 +77,36 @@ impl ClientContextMenuOverlay {
                 ..
             } => {
                 let mut items = vec![
-                    item("Rename pane", Action::RenamePane),
+                    item("重命名窗格", Action::RenamePane),
                     item("状态说明", Action::StatusInfo),
                 ];
                 if *has_manual_label {
-                    items.push(item("Clear pane name", Action::ClearPaneName));
+                    items.push(item("清除窗格名称", Action::ClearPaneName));
                 }
                 if source_pane_id.is_some() {
-                    items.push(item("Swap with focused pane", Action::SwapWithFocusedPane));
+                    items.push(item("与当前窗格互换", Action::SwapWithFocusedPane));
                 }
                 items.extend([
-                    item("Split right", Action::SplitRight),
-                    item("Split down", Action::SplitDown),
-                    item("Zoom", Action::Zoom),
+                    item("向右分屏", Action::SplitRight),
+                    item("向下分屏", Action::SplitDown),
+                    item("缩放", Action::Zoom),
                     item(
                         if *right_click_passthrough {
-                            "Use Herdr right-click menu"
+                            "使用 Herdr 右键菜单"
                         } else {
-                            "Send right-clicks to pane"
+                            "右键发送给窗格"
                         },
                         Action::ToggleRightClickPassthrough,
                     ),
-                    item("Close pane", Action::ClosePane),
+                    item("关闭窗格", Action::ClosePane),
                 ]);
                 items
             }
         };
         if matches!(self.target, ClientContextMenuTarget::Workspace { .. }) {
             items.extend([
-                item("New terminal", Action::NewTab),
-                item("Run command in new terminal...", Action::RunTaskCommand),
+                item("新建终端", Action::NewTab),
+                item("在新终端运行命令…", Action::RunTaskCommand),
             ]);
             items.sort_by_key(|item| match item.action {
                 Action::NewTab => 0,

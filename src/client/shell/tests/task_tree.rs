@@ -81,6 +81,20 @@ fn recent_projects_and_new_button_have_separate_click_and_scroll_regions() {
 }
 
 #[test]
+fn recent_project_rows_use_full_height_without_overlap() {
+    let state = with_recent_projects(7);
+    let rows = state.hits.recent_projects.clone();
+    assert_eq!(rows.len(), 4);
+    for (rect, _) in &rows {
+        assert_eq!(rect.height, super::super::task_tree::RECENT_ROW_HEIGHT);
+    }
+    for pair in rows.windows(2) {
+        assert_eq!(pair[0].0.bottom(), pair[1].0.y);
+    }
+    assert!(rows.last().expect("rows").0.bottom() <= state.hits.recent_body.bottom());
+}
+
+#[test]
 fn recent_projects_fit_narrow_and_short_terminals() {
     let mut state = with_recent_projects(7);
     for width in [1, 8, 18, 34, 60, 100] {
@@ -422,9 +436,9 @@ fn task_tree_animation_is_throttled_and_stops_when_not_visible() {
     state.hits.task_working_visible = true;
     assert!(state.tick_task_animation(now));
     let phase = state.task_animation_phase;
-    assert!(!state.tick_task_animation(now + std::time::Duration::from_millis(149)));
+    assert!(!state.tick_task_animation(now + std::time::Duration::from_millis(79)));
     assert_eq!(state.task_animation_phase, phase);
-    assert!(state.tick_task_animation(now + std::time::Duration::from_millis(150)));
+    assert!(state.tick_task_animation(now + std::time::Duration::from_millis(80)));
     for hidden in [
         "collapse",
         "unfocused",

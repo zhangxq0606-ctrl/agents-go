@@ -12,6 +12,7 @@ Agents Go 已公开于 https://github.com/zhangxq0606-ctrl/agents-go；默认分
 - 任务树和最近项目目录记忆已实现，包含按终端实际工作目录归档和恢复项目。
 - 用户已手动验收目录切换、关闭对话后归档、最近项目重开与重启后记录保留，确认正常；按用户指令不追加功能测试。
 - 侧栏项目标题、Git 分支和 Agent 状态的视觉呈现已实现。
+- 侧栏细节优化（2026-10-01）：Git 分支标记由缺字字形 `⎇` 改为 `▏`；最近项目行高由 1 增为 2 并修正滚动与预算；右键菜单条目全部中文化；运行状态点阵由 2×4 改为 2×3 Braille 旋转符并提高帧率。用户已重启手动查看确认。细节见 .local/prd/status-branch-redesign.md。
 - 已移除上游赞助名单与图片，并同步清理 docs/next README 草稿中的引用。
 - 最近一轮目录与任务树相关回归、格式及维护检查已通过；详细设计记录见 .local/prd/sidebar-tree.md。
 - README 与项目协作规范已改写为 Agents Go 方向，并说明 Herdr 来源和 Apache-2.0 许可证。
@@ -30,6 +31,7 @@ Agents Go 已公开于 https://github.com/zhangxq0606-ctrl/agents-go；默认分
 
 ## 最近完成
 
+- 2026-10-01：侧栏四项细节优化完成并通过针对性验证（`cargo fmt --check`、`clippy -D warnings`、`task_tree` 27 项、`context/menu` 52 项回归），用户重启手动查看确认：分支标记 `▏`、最近项目行高 2、右键菜单中文化、运行状态 2×3 点阵提速。改动文件：`src/client/shell/{task_tree,context_menu,mouse}.rs` 及对应测试。
 - 2026-10-01：main 已推送，GitHub 仓库已改为公开，默认分支为 main；README、LICENSE、NOTICE 的 Git blob 与本地一致。保留完整上游提交历史，本次未追加功能测试或构建。
 - 2026-10-01：用户手动验收核心归档/恢复链路通过；公开准备中补齐修改声明和第三方归属指针，扫描 2,904 个文本文件未发现命中的凭据模式或个人路径。LICENSE 附录占位符为 Apache 标准示例，保留原文。
 - 2026-09-30：隔离 Agents Go 本机配置目录和自动更新入口，清空旧 Herdr 发布资产清单，修正社区入口与维护者元数据并同步 API schema；`cargo fmt --check`/`just lint`、150 项维护测试（含 5 项跳过）、文档/热路径/集成资产检查，以及任务树与配置隔离针对性测试通过。完整 nextest 在 2,355 项通过后因本机文件系统不支持 EFS（OS error 50）失败；排除该环境限制后继续运行时，两项涉及默认终端创建的项目重开测试长时间不返回，已停止该轮，需单独定位。Release 编译产物已生成；Windows 打包结果仍待确认，手动 UI 验收状态见当前记录。

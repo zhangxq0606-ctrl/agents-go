@@ -1996,11 +1996,13 @@ impl ClientShellState {
                 outcome.repaint = true;
             }
             MouseEventKind::ScrollDown if super::contains(self.hits.recent_body, point) => {
+                let visible =
+                    usize::from(self.hits.recent_body.height / super::task_tree::RECENT_ROW_HEIGHT);
                 let max = self
                     .project_catalogs
                     .get(&self.active_endpoint_id)
                     .map_or(0, Vec::len)
-                    .saturating_sub(usize::from(self.hits.recent_body.height));
+                    .saturating_sub(visible);
                 self.recent_scroll = self.recent_scroll.saturating_add(1).min(max);
                 outcome.repaint = true;
             }

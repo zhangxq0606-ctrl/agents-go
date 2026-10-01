@@ -5,6 +5,9 @@ use super::render::{put_right_text, put_text, ShellRenderState};
 use super::*;
 use crate::protocol::{ClientShellAgent, ClientShellPane};
 
+/// Height of one "recent projects" row. Larger rows give a bigger click target.
+pub(super) const RECENT_ROW_HEIGHT: u16 = 2;
+
 fn subdued_tree_background(color: ratatui::style::Color) -> ratatui::style::Color {
     match color {
         ratatui::style::Color::Rgb(r, g, b) => {
@@ -202,6 +205,8 @@ fn kind_label(kind: &str) -> &str {
     }
 }
 
+const TASK_SPINNER_FRAMES: [&str; 10] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
 fn tree_indicator(
     status: crate::api::schema::AgentStatus,
     phase: u8,
@@ -210,7 +215,7 @@ fn tree_indicator(
     use crate::api::schema::AgentStatus;
     match status {
         AgentStatus::Working => (
-            ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"][usize::from(phase) % 8],
+            TASK_SPINNER_FRAMES[usize::from(phase) % TASK_SPINNER_FRAMES.len()],
             palette.green,
         ),
         AgentStatus::Blocked => ("!", palette.yellow),
@@ -285,12 +290,17 @@ pub(super) fn render(
         .is_some_and(|methods| methods.contains("project.list"));
     let recent_expanded = !state.recent_collapsed && content.height >= 18;
     let recent_items = if recent_expanded {
-        state.recent_projects.len().min(4) as u16
+        let available = content
+            .height
+            .saturating_sub(1 + footer_height + 2)
+            .saturating_div(RECENT_ROW_HEIGHT)
+            .max(1);
+        (state.recent_projects.len() as u16).min(4).min(available)
     } else {
         0
     };
     let recent_height = if recent_supported && content.height >= 9 {
-        recent_items + 2
+        recent_items * RECENT_ROW_HEIGHT + 2
     } else {
         0
     };
@@ -489,7 +499,7 @@ pub(super) fn render(
                 let branch = workspace
                     .branch
                     .as_deref()
-                    .map(|branch| format!(" ⎇{branch}"));
+                    .map(|branch| format!(" ▏{branch}"));
                 let branch_width = branch
                     .as_deref()
                     .map(|branch| {
@@ -769,7 +779,12 @@ pub(super) fn render(
             },
             Style::default().fg(palette.overlay0).bg(palette.sidebar_bg),
         );
-        hits.recent_body = Rect::new(content.x, header_y + 1, content.width, recent_items);
+        hits.recent_body = Rect::new(
+            content.x,
+            header_y + 1,
+            content.width,
+            recent_items * RECENT_ROW_HEIGHT,
+        );
         *state.recent_scroll = (*state.recent_scroll).min(
             state
                 .recent_projects
@@ -783,7 +798,13 @@ pub(super) fn render(
             .take(usize::from(recent_items))
             .enumerate()
         {
-            let row = Rect::new(content.x, header_y + 1 + index as u16, content.width, 1);
+            let row = Rect::new(
+                content.x,
+                header_y + 1 + index as u16 * RECENT_ROW_HEIGHT,
+                content.width,
+                RECENT_ROW_HEIGHT,
+            );
+            let label_y = row.y + (RECENT_ROW_HEIGHT - 1) / 2;
             let repeated = state
                 .recent_projects
                 .iter()
@@ -805,7 +826,7 @@ pub(super) fn render(
             put_text(
                 buffer,
                 row.x + 1,
-                row.y,
+                label_y,
                 row.right().saturating_sub(row.x + 1).min(2),
                 "▸ ",
                 Style::default().fg(palette.overlay0).bg(palette.sidebar_bg),
@@ -813,7 +834,7 @@ pub(super) fn render(
             put_ellipsis(
                 buffer,
                 row.x + 3,
-                row.y,
+                label_y,
                 row.right().saturating_sub(2),
                 &label,
                 Style::default().fg(palette.green).bg(palette.sidebar_bg),
@@ -932,8 +953,9 @@ impl ClientShellState {
         {
             return false;
         }
-        self.task_animation_phase = (self.task_animation_phase + 1) % 8;
-        self.task_animation_deadline = Some(now + std::time::Duration::from_millis(150));
+        self.task_animation_phase =
+            (self.task_animation_phase + 1) % TASK_SPINNER_FRAMES.len() as u8;
+        self.task_animation_deadline = Some(now + std::time::Duration::from_millis(80));
         true
     }
 

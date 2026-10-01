@@ -267,7 +267,7 @@ fn duplicate_repo_parents_remain_visible_and_focusable_when_collapsed() {
                 .iter()
                 .position(|item| item.action == ClientContextMenuAction::Close)
                 .expect("close item");
-            assert_eq!(menu.items()[close_index].label, "Close");
+            assert_eq!(menu.items()[close_index].label, "关闭");
             assert_eq!(
                 menu.items()
                     .iter()
