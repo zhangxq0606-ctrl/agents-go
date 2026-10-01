@@ -23,7 +23,8 @@ Agents Go 已公开于 https://github.com/zhangxq0606-ctrl/agents-go；默认分
 ## 进行中
 
 - 自动测试的 EFS 环境限制和两项真实终端测试挂起仍有记录；手动验收已通过，本轮不继续排查，不以此阻塞公开源码。
-- 上游已比本项目基线多 4 个提交（2026-10-01 fetch）；未合并，后续按需审阅 Codex 检测与 Windows 通知等改动。
+- 上游仍有 1 个提交未集成（2026-10-01 fetch）：`347f9c9` Windows 原生可操作通知（feat，19 文件、新增 `windows` crate 依赖）；已确认可无冲突 cherry-pick，待船长决定是否授权新增依赖后处理。
+- 本机 `ag` 会话运行 `target/debug/herdr.exe` 时，需要重链主程序的 `just check`/`just test`/`cargo build` 会因文件占用（os error 5）失败；会话期间改用 `cargo test --bin herdr <过滤>` 与 `cargo clippy`。约定见 AGENTS.md。
 - 原工作区为浅克隆，补全历史时受既有 shallow.lock 阻挡；本次通过 .tmp/open-source/publish-filtered 中的完整提交历史接入本地提交并推送，未直接改动原工作区 .git 内部文件。后续补全原工作区历史时需处理该 Git 操作限制；不影响程序运行和公开仓库历史。
 
 ## 上游维护约定
@@ -32,6 +33,8 @@ Agents Go 已公开于 https://github.com/zhangxq0606-ctrl/agents-go；默认分
 
 ## 最近完成
 
+- 2026-10-01：集成上游 3 个提交并保留原作者：`d4e335e`（文档删外部链接）、`07e3840`（修复 codex 空闲检测，更新 codex/pi 清单）、`d6b40d4`（codex 空闲文档）。`cargo test --bin herdr detect` 137 项通过，`cargo clippy --all-targets --locked -D warnings` 通过。`347f9c9`（Windows 原生通知，需新增依赖）暂缓。
+- 2026-10-01：在 AGENTS.md 补入上游改动汇报规范（编号一眼卡片、难度分级、交互原则、提交方式由 agent 决策后报批）与 Windows 本地验证约定（默认 target、运行中会话的验证路径）。
 - 2026-10-01：README 默认语言改为中文，英文版转为 `README.en.md`；同步 docs/next 与发布流水线（versions.mjs、release.py、justfile、release.yml）中的文件名引用，删除 `README.zh-CN.md`。`bun test scripts/docs/` 7 项通过。
 - 2026-10-01：侧栏四项细节优化完成并通过针对性验证（`cargo fmt --check`、`clippy -D warnings`、`task_tree` 27 项、`context/menu` 52 项回归），用户重启手动查看确认：分支标记 `▏`、最近项目行高 2、右键菜单中文化、运行状态 2×3 点阵提速。改动文件：`src/client/shell/{task_tree,context_menu,mouse}.rs` 及对应测试。
 - 2026-10-01：main 已推送，GitHub 仓库已改为公开，默认分支为 main；README、LICENSE、NOTICE 的 Git blob 与本地一致。保留完整上游提交历史，本次未追加功能测试或构建。

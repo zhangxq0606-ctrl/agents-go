@@ -26,6 +26,13 @@ Rendering, layout, PTY parsing, detection, resizing, and client fanout scale wit
 - Add regression coverage for behavior changes and important failure paths. Do not weaken a test to make a change pass.
 - Prefer repository just recipes. just test runs the Rust and maintenance suites; just check runs the repository checks. On Windows, just lint and just build use the repository's PowerShell packaging scripts.
 - Report checks that could not run and why. A successful compile does not replace manual UI verification.
+
+#### 本地验证与运行中会话（Windows）
+
+- 始终使用仓库默认 `target/`，它保持增量、从秒级起步。切勿为避让文件占用而临时指定一个全新的 `CARGO_TARGET_DIR`：那会重编全部依赖，把验证从秒级拖成分钟级。
+- 本机常在 `ag` 会话中运行 `target/debug/herdr.exe`。Windows 不允许覆盖运行中的可执行文件，因此任何需要重新链接主程序的命令（`just check`、`just test`、`cargo build`）会在 `target/debug/herdr.exe` 上报 os error 5。
+- 会话运行期间的针对性验证：`cargo test --locked --bin herdr <过滤>`（构建独立测试二进制，不重链主 exe）与 `cargo clippy --all-targets --locked -- -D warnings`（只做检查、不链接）。
+- 确需完整 `just check` 或 `just build` 时，先请船长关闭 `ag` 会话再执行；若跳过，明确说明跳过项与原因。
 - Update PROGRESS.md when behavior, structure, or project direction changes. Keep exploratory notes in .local/prd/; do not maintain a second progress log.
 - Keep user-facing docs aligned with implemented behavior. Do not edit upstream release snapshots or claim planned work as available.
 
