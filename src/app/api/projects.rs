@@ -1,3 +1,4 @@
+// Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE.
 //! Server-owned directory history; presentation and selection stay in clients.
 use super::responses::{encode_error, encode_success};
 use crate::api::schema::{ProjectInfo, ProjectTarget, ResponseResult, WorkspaceCreateParams};

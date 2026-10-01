@@ -1,3 +1,4 @@
+// Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE.
 use super::render::{display_width, put_right_text, put_text, ShellRenderState};
 use super::*;
 

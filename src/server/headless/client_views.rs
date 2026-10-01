@@ -1,3 +1,4 @@
+// Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE.
 use super::*;
 use crate::server::client_shell::resize_popup_runtime;
 use crate::server::clients::ClientShellTopology;

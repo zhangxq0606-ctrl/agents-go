@@ -1,3 +1,4 @@
+// Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE.
 //! Optional JSON project catalog, isolated from the frozen endpoint snapshot.
 use super::*;
 use crate::api::schema::{EmptyParams, Method, ProjectTarget};

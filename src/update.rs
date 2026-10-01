@@ -1,3 +1,4 @@
+// Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE.
 //! Self-update mechanism.
 //!
 //! Checks the Agents Go repository update manifest for newer versions.

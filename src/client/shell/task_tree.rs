@@ -1,3 +1,4 @@
+// Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE.
 //! Client-owned project tree. Nodes refer to existing workspace and pane IDs;
 //! expanding a node never changes runtime state or acknowledges a completion.
 use super::render::{put_right_text, put_text, ShellRenderState};

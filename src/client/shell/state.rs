@@ -1,3 +1,4 @@
+// Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE.
 use super::*;
 
 pub(super) const MIN_TAB_WIDTH: u16 = 8;

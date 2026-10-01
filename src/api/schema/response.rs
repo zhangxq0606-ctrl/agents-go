@@ -1,3 +1,4 @@
+// Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE.
 use serde::{Deserialize, Serialize};
 
 use super::agents::AgentInfo;

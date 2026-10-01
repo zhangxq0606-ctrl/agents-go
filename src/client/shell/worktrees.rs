@@ -1,3 +1,4 @@
+// Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE.
 use super::*;
 
 fn checkout_path_preview(root: &str, repo: &str, branch: &str) -> String {

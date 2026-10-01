@@ -1,3 +1,4 @@
+# Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE.
 [package]
 name = "herdr"
 version = "0.9.3"
@@ -13,10 +14,12 @@ include = [
     "src/**/*",
     "assets/sounds/*",
     "docs/next/api/herdr-api.schema.json",
+    "docs/next/api/herdr-api.schema.json.license",
     "skills/herdr/SKILL.md",
     "distribution/install.ps1",
     "README.md",
     "LICENSE",
+    "NOTICE",
     "Cargo.toml",
 ]
 

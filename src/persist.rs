@@ -1,3 +1,4 @@
+// Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE.
 //! Session persistence — save/restore workspaces, layouts, and working directories.
 //!
 //! Stored at `~/.config/herdr/session.json`.

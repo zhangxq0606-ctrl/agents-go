@@ -1,3 +1,4 @@
+// Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE.
 use std::fs::File;
 use std::io;
 use std::path::{Path, PathBuf};

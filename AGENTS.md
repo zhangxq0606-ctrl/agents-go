@@ -1,3 +1,4 @@
+<!-- Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE. -->
 # Agents Go
 
 Agents Go is a Herdr-based terminal workspace for running AI coding agents. This repository is being prepared as an independent project; some package names, update endpoints, and upstream release automation may still refer to Herdr.

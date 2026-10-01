@@ -1,3 +1,4 @@
+<!-- Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE. -->
 # Contributing to Agents Go
 
 Agents Go is an independent project based on Herdr and is still being prepared for public development. Keep changes focused on the task-tree experience and the terminal runtime it depends on.

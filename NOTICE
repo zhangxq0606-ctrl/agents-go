@@ -1,0 +1,17 @@
+Agents Go
+
+Agents Go is a modified version of Herdr (https://github.com/herdrdev/herdr),
+based on upstream commit 331775c. The upstream Git history and Apache-2.0
+license are retained. Agents Go is not an official Herdr release.
+
+Agents Go contributors modified the project tree, agent activity display,
+recent-project persistence and recovery, and fork configuration. Changed source
+files contain modification notices. For generated JSON and JSON data files,
+adjacent .license files carry the notices without changing the data format.
+
+Third-party notices remain in their original locations, including:
+- vendor/libghostty-vt/LICENSE (MIT; Ghostty contributors)
+- vendor/portable-pty/LICENSE.md (MIT; Wez Furlong)
+- packaging/windows/licenses/ (Microsoft ConPTY license and notices)
+
+This notice supplements, and does not replace, those licenses or notices.

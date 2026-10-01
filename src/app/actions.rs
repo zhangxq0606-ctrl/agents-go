@@ -1,3 +1,4 @@
+// Modified for Agents Go by Agents Go contributors, 2026-10-01. See NOTICE.
 //! Pure state mutations on AppState.
 //! These don't need channels, async, or PTY runtime.
 
