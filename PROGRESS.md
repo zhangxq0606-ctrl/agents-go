@@ -5,7 +5,7 @@
 
 ## 当前状态
 
-Agents Go 仓库为 zhangxq0606-ctrl/agents-go；当前本地分支为 main，origin 指向本仓库，upstream 指向 herdrdev/herdr。功能改造已提交为 9d487e2，公开准备正在执行。GitHub CLI 已恢复登录，目标仓库已确认 ADMIN 权限。Cargo 包名和可执行文件名继续保留 herdr（用户约定），不做全面品牌迁移。
+Agents Go 已公开于 https://github.com/zhangxq0606-ctrl/agents-go；默认分支与当前本地分支均为 main，origin 指向本仓库，upstream 指向 herdrdev/herdr。功能改造提交为 9d487e2，公开准备提交为 9eb7bc3；已核验 GitHub 提交、README、LICENSE 和 NOTICE 与本地一致。Cargo 包名和可执行文件名继续保留 herdr（用户约定），不做全面品牌迁移。
 
 ## 已完成
 
@@ -20,9 +20,9 @@ Agents Go 仓库为 zhangxq0606-ctrl/agents-go；当前本地分支为 main，or
 
 ## 进行中
 
-- 完成公开准备文档提交、推送 main、核验 GitHub 文件后公开仓库（本轮已获授权）。
 - 自动测试的 EFS 环境限制和两项真实终端测试挂起仍有记录；手动验收已通过，本轮不继续排查，不以此阻塞公开源码。
 - 上游已比本项目基线多 4 个提交（2026-10-01 fetch）；未合并，后续按需审阅 Codex 检测与 Windows 通知等改动。
+- 原工作区为浅克隆，补全历史时受既有 shallow.lock 阻挡；本次通过 .tmp/open-source/publish-filtered 中的完整提交历史接入本地提交并推送，未直接改动原工作区 .git 内部文件。后续补全原工作区历史时需处理该 Git 操作限制；不影响程序运行和公开仓库历史。
 
 ## 上游维护约定
 
@@ -30,6 +30,7 @@ Agents Go 仓库为 zhangxq0606-ctrl/agents-go；当前本地分支为 main，or
 
 ## 最近完成
 
+- 2026-10-01：main 已推送，GitHub 仓库已改为公开，默认分支为 main；README、LICENSE、NOTICE 的 Git blob 与本地一致。保留完整上游提交历史，本次未追加功能测试或构建。
 - 2026-10-01：用户手动验收核心归档/恢复链路通过；公开准备中补齐修改声明和第三方归属指针，扫描 2,904 个文本文件未发现命中的凭据模式或个人路径。LICENSE 附录占位符为 Apache 标准示例，保留原文。
-- 2026-09-30：隔离 Agents Go 本机配置目录和自动更新入口，清空旧 Herdr 发布资产清单，修正社区入口与维护者元数据并同步 API schema；`cargo fmt --check`/`just lint`、150 项维护测试（含 5 项跳过）、文档/热路径/集成资产检查，以及任务树与配置隔离针对性测试通过。完整 nextest 在 2,355 项通过后因本机文件系统不支持 EFS（OS error 50）失败；排除该环境限制后继续运行时，两项涉及默认终端创建的项目重开测试长时间不返回，已停止该轮，需单独定位。Release 编译产物已生成；Windows 打包结果与手动 UI 验收仍待确认。
-- 2026-09-30：创建 Agents Go 私有仓库并重写项目介绍、协作规范；代码尚未推送。
+- 2026-09-30：隔离 Agents Go 本机配置目录和自动更新入口，清空旧 Herdr 发布资产清单，修正社区入口与维护者元数据并同步 API schema；`cargo fmt --check`/`just lint`、150 项维护测试（含 5 项跳过）、文档/热路径/集成资产检查，以及任务树与配置隔离针对性测试通过。完整 nextest 在 2,355 项通过后因本机文件系统不支持 EFS（OS error 50）失败；排除该环境限制后继续运行时，两项涉及默认终端创建的项目重开测试长时间不返回，已停止该轮，需单独定位。Release 编译产物已生成；Windows 打包结果仍待确认，手动 UI 验收状态见当前记录。
+- 2026-09-30：创建 Agents Go 仓库并重写项目介绍、协作规范；后续公开与推送状态见当前记录。
