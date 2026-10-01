@@ -51,3 +51,29 @@ Rendering, layout, PTY parsing, detection, resizing, and client fanout scale wit
 - Integrate isolated changes with cherry-pick when their dependencies are clear. For changes coupled to Herdr-only product or release behavior, port the smallest useful implementation and its tests instead.
 - After integration, rerun the relevant tests and checks, record the upstream commit and result in PROGRESS.md, and retain required attribution and license notices.
 - Never push Agents Go changes to the upstream remote.
+
+#### 上游改动汇报（中文约定）
+
+向船长汇报上游差异时，逐个提交给出一张「一眼卡片」，不贴大段 diff、不堆术语：
+
+- 编号：每张卡片带递增编号（①②③…），便于船长按编号决策。
+- 首行：`<编号> <短SHA>  <一句话说清改了什么>`，用大白话，让船长不读代码就能懂。
+- `价值`：对我们有没有用（一句话）。
+- `难度`：省事 / 一般 / 麻烦，按下面定义判断并给出对应处理方式。
+- `建议`：采纳 / 暂缓 / 不采纳，并说明理由。
+
+难度分级：
+
+- 省事：不碰我们改过的文件，拿来即用；直接集成后跑编译与相关测试。
+- 一般：能自动合并，但落点在我们改过的文件；文本无冲突不等于语义正确，集成后必须编译并跑相关测试确认。
+- 麻烦：有冲突，或依赖我们已删/已改的功能；先单独立项，手工移植并重写测试。
+
+交互原则：
+
+- 先自查可行性再汇报：能否干净集成、有无冲突，在隔离环境（如临时 worktree）自行验证，不把技术细节判断推给船长。
+- 技术细节自主决策：是否拆分提交、改哪些文件、如何移植、快照要不要动等实现层面的取舍，由 agent 科学判断并直接执行，只在汇报里简述结论与理由，不作为问题抛给船长。只把「要不要做、范围多大、新增依赖、改 CI/公共契约」等真正需要拍板的事项交给船长。
+- 价值与成本分开讲：「要不要」和「贵不贵」是两个独立信号，不要混成一段。
+- 一次问清：该船长拍板的事项（集成范围、新增依赖、提交方式等）一次性列成选项，不来回挤牙膏。
+- 红线显式标注：新增依赖、改 CI、改公共契约等单独点明，但仍附上推荐选项。
+- 提交方式由 agent 科学决策后提交审批：船长不需要自行判断用 cherry-pick 还是归并，agent 在汇报卡片这一步就给出明确推荐（保留上游提交与作者，或按模块归并成一个 fork 提交）及理由，随范围、依赖等一并交由船长审批。
+- 集成与否由船长决定：只 fetch 比较，不自动合并；集成后跑测试并将上游提交与结果记录到 PROGRESS.md。
