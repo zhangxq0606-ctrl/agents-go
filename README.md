@@ -32,6 +32,20 @@ Run tests and checks:
 
 The Windows build recipe packages the required ConPTY runtime. A successful build does not replace manual verification of terminal rendering and interaction.
 
+## Short command
+
+The executable is named `herdr`. To launch Agents Go with a short command, add an alias to your shell profile.
+
+PowerShell (`$PROFILE`):
+
+    function ag { herdr --session agents-go @args }
+
+Bash or zsh (`~/.bashrc` or `~/.zshrc`):
+
+    alias ag='herdr --session agents-go'
+
+Note: `ag` is also the command for The Silver Searcher. If you already use it, pick another name such as `ago`.
+
 ## Known check limitations
 
 The project owner manually verified directory changes, archiving after closing all conversations, reopening recent projects, and retaining history after restart. The full automated suite has not completed on the development machine: its filesystem does not support the EFS test fixture, and two project-reopen tests that create real terminals did not finish. These limitations are recorded rather than claimed as passing checks.

@@ -33,6 +33,20 @@ Windows 打包构建：
 
 Windows 构建配方会打包所需的 ConPTY 运行组件。编译成功后仍需手动检查终端中的显示和交互。
 
+## 短命令
+
+可执行文件名为 `herdr`。如需用短命令启动 Agents Go，在 shell 配置里加一个别名。
+
+PowerShell（`$PROFILE`）：
+
+    function ag { herdr --session agents-go @args }
+
+Bash 或 zsh（`~/.bashrc` 或 `~/.zshrc`）：
+
+    alias ag='herdr --session agents-go'
+
+注意：`ag` 同时是 The Silver Searcher 的命令名。若已使用该工具，请换一个名字，如 `ago`。
+
 ## 已知检查限制
 
 项目维护者已手动验证切换目录、关闭全部对话后归档、点击最近项目重开，以及重启后的历史记录保留。开发机上的完整自动测试尚未全部完成：文件系统不支持 EFS 测试，两项创建真实终端的项目重开测试未能结束。这些限制保留记录，不视为测试通过。
