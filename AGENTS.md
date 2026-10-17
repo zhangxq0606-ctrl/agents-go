@@ -57,6 +57,7 @@ Rendering, layout, PTY parsing, detection, resizing, and client fanout scale wit
 - Review upstream performance changes by reading the code diff and affected tests. For render or pane-scaled changes, record a comparable before/after result with just bench-render-scale.
 - Integrate isolated changes with cherry-pick when their dependencies are clear. For changes coupled to Herdr-only product or release behavior, port the smallest useful implementation and its tests instead.
 - After integration, rerun the relevant tests and checks, record the upstream commit and result in PROGRESS.md, and retain required attribution and license notices.
+- Record each upstream review's findings and decisions (adopt/defer/reject, difficulty, blocking conflicts) in UPSTREAM_REVIEWS.md. That file is the review archive; PROGRESS.md keeps only the project's current state and completed work.
 - Never push Agents Go changes to the upstream remote.
 
 #### 上游改动汇报（中文约定）
